@@ -1,12 +1,45 @@
 #!/usr/bin/env node
-// thinking-tree context injection for SessionStart hook
-// Reads recent fragments, open questions, and todos
-// Outputs formatted context for AI session injection
+// thinking-tree SessionStart hook
+// 1. Sync rules from plugin to ~/.claude/rules/
+// 2. Inject recent fragments, questions, todos as context
 
 const fs = require('fs');
 const path = require('path');
 
-const TREE = path.join(process.env.USERPROFILE || process.env.HOME, '.thinking-tree');
+const HOME = process.env.USERPROFILE || process.env.HOME;
+const TREE = path.join(HOME, '.thinking-tree');
+const RULES_DIR = path.join(HOME, '.claude', 'rules');
+const PLUGIN_ROOT = process.env.CLAUDE_PLUGIN_ROOT || path.resolve(__dirname, '..');
+
+// --- Rules sync ---
+// Copy plugin rules to ~/.claude/rules/ (single source of truth)
+// Skip clarifier.md if .off exists (user toggled off via /think)
+function syncRules() {
+  const pluginRules = path.join(PLUGIN_ROOT, 'rules');
+  if (!fs.existsSync(pluginRules)) return;
+
+  fs.mkdirSync(RULES_DIR, { recursive: true });
+
+  for (const file of fs.readdirSync(pluginRules)) {
+    if (!file.endsWith('.md')) continue;
+    const src = path.join(pluginRules, file);
+    const dest = path.join(RULES_DIR, file);
+    const offDest = dest + '.off';
+
+    // If user toggled off (e.g. clarifier.md.off exists), don't overwrite
+    if (fs.existsSync(offDest)) continue;
+
+    // Copy if missing or outdated
+    const srcContent = fs.readFileSync(src, 'utf-8');
+    let destContent = '';
+    try { destContent = fs.readFileSync(dest, 'utf-8'); } catch {}
+    if (srcContent !== destContent) {
+      fs.writeFileSync(dest, srcContent, 'utf-8');
+    }
+  }
+}
+
+try { syncRules(); } catch (e) { /* non-fatal */ }
 
 function readFile(name) {
   try {
