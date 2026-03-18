@@ -1,6 +1,18 @@
 {
-  "description": "thinking-tree hooks: context injection + recorder",
+  "description": "thinking-tree hooks: setup + context injection + recorder",
   "hooks": {
+    "Setup": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/inject-context.js\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
     "SessionStart": [
       {
         "matcher": "*",
