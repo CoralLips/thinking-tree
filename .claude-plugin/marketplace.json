@@ -1,0 +1,18 @@
+{
+  "name": "CoralLips",
+  "owner": {
+    "name": "CL"
+  },
+  "metadata": {
+    "description": "Plugins by CL (CoralLips)",
+    "homepage": "https://github.com/CoralLips/thinking-tree"
+  },
+  "plugins": [
+    {
+      "name": "thinking-tree",
+      "version": "0.1.0",
+      "source": ".",
+      "description": "Persistent thinking system — capture, organize, and evolve scattered thoughts across Claude Code sessions"
+    }
+  ]
+}
