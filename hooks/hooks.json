@@ -1,0 +1,27 @@
+{
+  "description": "thinking-tree hooks: context injection + recorder",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/inject-context.js\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "prompt",
+            "prompt": "如果本轮有用户消息且包含思考/讨论内容（非纯工程操作如 git commit、tsc 修复），spawn 一个后台 recorder agent（model: haiku, run_in_background: true）。传入本轮用户消息和你的回复摘要，加固定指令：'读取 ~/.thinking-tree/.session-log.md 获取历史上下文，按 thinking-tree 编排标准的路由规则评估和记录。所有文件使用绝对路径。'如果是纯工程/代码操作，直接说'无需记录'。"
+          }
+        ]
+      }
+    ]
+  }
+}
