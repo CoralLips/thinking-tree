@@ -30,7 +30,7 @@
         "hooks": [
           {
             "type": "agent",
-            "prompt": "如果本轮有用户消息且包含思考/讨论内容（非纯工程操作如 git commit、tsc 修复），读取 ~/.thinking-tree/.session-log.md 获取历史上下文，按 thinking-tree 编排标准的路由规则评估和记录。所有文件使用绝对路径。如果是纯工程/代码操作，直接说'无需记录'。",
+            "prompt": "如果本轮有用户消息且包含思考/讨论内容（非纯工程操作如 git commit、tsc 修复），读取 ~/.thinking-tree/.session-log.md 获取历史上下文，按 thinking-tree 编排标准的路由规则评估和记录。所有文件使用绝对路径。如果是纯工程/代码操作，直接说'无需记录'。\n\n写入 session log 时，每轮条目必须简洁：\n- 格式：## Round N（日期时间）\\n用户：一句话概括\\nAI：一句话概括\\n结论/动作：1-2 行\\n---\n- 总计不超过 5 行，不含代码块、表格、完整引用\n- 目的是留索引，不是留全文",
             "timeout": 60
           }
         ]

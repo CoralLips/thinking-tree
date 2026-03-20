@@ -41,6 +41,34 @@ function syncRules() {
 
 try { syncRules(); } catch (e) { /* non-fatal */ }
 
+// --- Session log cleanup ---
+// FIFO queue: keep only the most recent MAX_ROUNDS rounds
+const MAX_ROUNDS = 15;
+
+function trimSessionLog() {
+  const logPath = path.join(TREE, '.session-log.md');
+  if (!fs.existsSync(logPath)) return;
+
+  const content = fs.readFileSync(logPath, 'utf-8');
+
+  // Find all ## Round positions
+  const roundStarts = [];
+  const regex = /^## Round /gm;
+  let match;
+  while ((match = regex.exec(content)) !== null) {
+    roundStarts.push(match.index);
+  }
+
+  if (roundStarts.length <= MAX_ROUNDS) return;
+
+  // Keep header (everything before first round) + last MAX_ROUNDS rounds
+  const header = content.slice(0, roundStarts[0]);
+  const keepFrom = roundStarts[roundStarts.length - MAX_ROUNDS];
+  fs.writeFileSync(logPath, header + content.slice(keepFrom), 'utf-8');
+}
+
+try { trimSessionLog(); } catch (e) { /* non-fatal */ }
+
 function readFile(name) {
   try {
     return fs.readFileSync(path.join(TREE, name), 'utf-8');
