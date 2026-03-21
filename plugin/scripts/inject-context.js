@@ -106,11 +106,34 @@ function extractPendingTodos(content) {
   return todos;
 }
 
+// --- Meta: read and update fragment count ---
+const META_PATH = path.join(TREE, '.meta.json');
+const REDUCE_THRESHOLD = 20; // new fragments since last /reduce
+
+function readMeta() {
+  try {
+    return JSON.parse(fs.readFileSync(META_PATH, 'utf-8'));
+  } catch {
+    return { fragments: { count: 0, lastReduceCount: 0, lastReduceDate: null }, sessionLog: { roundCount: 0 } };
+  }
+}
+
+function writeMeta(meta) {
+  fs.writeFileSync(META_PATH, JSON.stringify(meta, null, 2) + '\n', 'utf-8');
+}
+
 // --- Main ---
 
-const fragments = extractRecentFragments(readFile('fragments.md'));
+const fragmentContent = readFile('fragments.md');
+const fragments = extractRecentFragments(fragmentContent);
 const questions = extractOpenQuestions(readFile('questions.md'));
 const todos = extractPendingTodos(readFile('todos.md'));
+
+// Update meta with current fragment count
+const currentFragmentCount = (fragmentContent.match(/^## #/gm) || []).length;
+const meta = readMeta();
+meta.fragments.count = currentFragmentCount;
+writeMeta(meta);
 
 const hasContent = fragments.length || questions.length || todos.length;
 if (!hasContent) process.exit(0);
@@ -132,6 +155,14 @@ if (questions.length) {
 if (todos.length) {
   lines.push(`## 待办行动项（${todos.length} 条）`);
   todos.forEach(t => lines.push(`- ${t}`));
+  lines.push('');
+}
+
+// Reduce threshold check
+const newSinceReduce = currentFragmentCount - (meta.fragments.lastReduceCount || 0);
+if (newSinceReduce >= REDUCE_THRESHOLD) {
+  const lastDate = meta.fragments.lastReduceDate || '从未';
+  lines.push(`⚠️ 碎片池已有 ${currentFragmentCount} 条（上次整理：${lastDate}，新增 ${newSinceReduce} 条），建议运行 /reduce 整理`);
   lines.push('');
 }
 
