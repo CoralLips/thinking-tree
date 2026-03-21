@@ -108,7 +108,6 @@ function extractPendingTodos(content) {
 
 // --- Meta: read and update fragment count ---
 const META_PATH = path.join(TREE, '.meta.json');
-const REDUCE_THRESHOLD = 20; // new fragments since last /reduce
 
 function readMeta() {
   try {
@@ -155,14 +154,6 @@ if (questions.length) {
 if (todos.length) {
   lines.push(`## 待办行动项（${todos.length} 条）`);
   todos.forEach(t => lines.push(`- ${t}`));
-  lines.push('');
-}
-
-// Reduce threshold check
-const newSinceReduce = currentFragmentCount - (meta.fragments.lastReduceCount || 0);
-if (newSinceReduce >= REDUCE_THRESHOLD) {
-  const lastDate = meta.fragments.lastReduceDate || '从未';
-  lines.push(`⚠️ 碎片池已有 ${currentFragmentCount} 条（上次整理：${lastDate}，新增 ${newSinceReduce} 条），建议运行 /reduce 整理`);
   lines.push('');
 }
 
