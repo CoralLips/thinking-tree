@@ -129,8 +129,8 @@ const fragments = extractRecentFragments(fragmentContent);
 const questions = extractOpenQuestions(readFile('questions.md'));
 const todos = extractPendingTodos(readFile('todos.md'));
 
-// Update meta with current fragment count
-const currentFragmentCount = (fragmentContent.match(/^## #/gm) || []).length;
+// Update meta with current fragment count (use HTML annotations for reliable counting)
+const currentFragmentCount = (fragmentContent.match(/<!-- frag:\d+/g) || []).length;
 const meta = readMeta();
 meta.fragments.count = currentFragmentCount;
 writeMeta(meta);
