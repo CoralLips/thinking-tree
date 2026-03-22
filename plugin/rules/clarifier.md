@@ -4,17 +4,18 @@
 
 ## 角色
 
-主对话：正常与用户交流。Stop hook 自动触发后台 agent，无需主对话手动 spawn。
-子 agent 有两个顺序职责：
-- **Logger**：更新 session-log（必做）
-- **Recorder**：评估并捕获新洞察到碎片池（有条件）
+主对话：正常与用户交流。
+Logger：Stop hook (command, async) 自动运行，零阻塞，代码级写 session-log。
+Recorder + Router：由主对话在 SessionStart 时按指令启动后台 agent。
 
-路由（碎片→思路文件）不是 Recorder 的职责，由 /reduce 或 Router 单独处理。
+## Recorder 触发机制
 
-## 触发机制
-
-Stop hook（plugin hooks.json）在每轮回复结束后自动触发子 agent。
-主对话**不需要**手动 spawn — hook 保证触发。
+1. Stop hook (async command) 每轮自动写 session-log.md + 标记 .pending-review
+2. SessionStart 时 inject-context.js 检测 .pending-review，输出 ⚡ 触发指令
+3. **主对话看到 ⚡ RECORDER 触发时，必须立即用 Agent tool 启动后台 agent：**
+   - `run_in_background: true`
+   - prompt 使用 inject-context.js 输出中 `--- RECORDER PROMPT START ---` 到 `--- RECORDER PROMPT END ---` 之间的内容
+   - 启动后立即回复用户，不等待 Recorder 完成
 
 ## 主对话输出规则
 
@@ -45,30 +46,19 @@ Stop hook（plugin hooks.json）在每轮回复结束后自动触发子 agent。
 
 ---
 
-## 子 agent 协议
+## 架构说明
 
-子 agent 收到主 AI 传入的内容后，按以下顺序执行：
+```
+每轮结束 → Stop hook (command, async) → turn-logger.js（零阻塞）
+  ├─ 解析 transcript → session-log.md
+  ├─ .meta.json roundCount++
+  └─ 写 .pending-review
 
-### 1. Logger（必做）
-- 读取 `~/.thinking-tree/.session-log.md`（不存在则创建）
-- 将本轮对话追加为简洁条目（≤5 行，格式见 hooks.json prompt）
-- session log 的 FIFO 清理由 inject-context.js 在 SessionStart 时自动执行
-
-### 2. Recorder（有条件）
-- 如果本轮包含思考/讨论内容（非纯工程操作），评估是否有新洞察
-- 有 → 写入 `~/.thinking-tree/fragments.md`（碎片池是统一入口）
-- 写完后更新 `~/.thinking-tree/.meta.json` 的 fragments.count
-- 无 → 跳过，只报告"已记录日志，无需捕获"
-
-### Recorder 不做的事
-- **不读思路文件**（不判断碎片应归入哪个思路文件——路由是 Router 的职责）
-- **不读 fragments.md 做去重**（去重是 /reduce 的职责）
-- **不写入 questions.md 或 todos.md**（路由是 Router 的职责）
-- **不替用户创作**，不确定就不记
+会话启动 → inject-context.js → 检测 .pending-review → 输出 ⚡ 指令
+主 AI → 看到 ⚡ → Agent(run_in_background) → 后台 Recorder + Router
+```
 
 ### 路径说明
 - `~` 指用户 home 目录（当前系统为 `C:\Users\CL`）
 - 所有 thinking-tree 文件位于 `~/.thinking-tree/`，不在项目目录中
-- 读写文件时使用绝对路径，如 `C:\Users\CL\.thinking-tree\fragments.md`
-
-注意：只处理 session log 和传入内容中实际存在的信息，不要臆造。
+- 读写文件时使用绝对路径

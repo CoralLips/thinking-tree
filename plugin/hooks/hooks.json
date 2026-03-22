@@ -29,9 +29,10 @@
       {
         "hooks": [
           {
-            "type": "agent",
-            "prompt": "两个职责：Logger + Recorder。路径：~ = 用户 home。\n\n## Logger（必做）\n读 ~/.thinking-tree/.session-log.md，追加：\n## Round N（时间）\\n用户：一句话\\nAI：一句话\\n结论：1行\\n---\n不存在则创建。完成后读 ~/.thinking-tree/.meta.json，sessionLog.roundCount++，写回。\n\n## Recorder（有条件）\n本轮有新洞察（非工程操作、非重复）→ 写入 ~/.thinking-tree/fragments.md：\n读 .meta.json 的 fragments.nextId → <!-- frag:N date:YYYY-MM-DD --> + ## #标签 标题（日期）+ 内容 + ---\n写完更新 .meta.json：count++, nextId++\n无新洞察 → 跳过。\n\n## 不做\n不读思路文件，不去重，不路由，不写 questions/todos。纯工程操作只跑 Logger。",
-            "timeout": 30
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/turn-logger.js\"",
+            "async": true,
+            "timeout": 10
           }
         ]
       }

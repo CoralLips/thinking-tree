@@ -41,33 +41,7 @@ function syncRules() {
 
 try { syncRules(); } catch (e) { /* non-fatal */ }
 
-// --- Session log cleanup ---
-// FIFO queue: keep only the most recent MAX_ROUNDS rounds
-const MAX_ROUNDS = 15;
-
-function trimSessionLog() {
-  const logPath = path.join(TREE, '.session-log.md');
-  if (!fs.existsSync(logPath)) return;
-
-  const content = fs.readFileSync(logPath, 'utf-8');
-
-  // Find all ## Round positions
-  const roundStarts = [];
-  const regex = /^## Round /gm;
-  let match;
-  while ((match = regex.exec(content)) !== null) {
-    roundStarts.push(match.index);
-  }
-
-  if (roundStarts.length <= MAX_ROUNDS) return;
-
-  // Keep header (everything before first round) + last MAX_ROUNDS rounds
-  const header = content.slice(0, roundStarts[0]);
-  const keepFrom = roundStarts[roundStarts.length - MAX_ROUNDS];
-  fs.writeFileSync(logPath, header + content.slice(keepFrom), 'utf-8');
-}
-
-try { trimSessionLog(); } catch (e) { /* non-fatal */ }
+// Session log trimming moved to turn-logger.js (Stop hook)
 
 function readFile(name) {
   try {
@@ -158,5 +132,41 @@ if (todos.length) {
 }
 
 lines.push('上述内容来自 ~/.thinking-tree/，详情可直接读取对应文件。');
+
+// --- Pending review: trigger background Recorder ---
+const PENDING_PATH = path.join(TREE, '.pending-review');
+try {
+  if (fs.existsSync(PENDING_PATH)) {
+    const pending = JSON.parse(fs.readFileSync(PENDING_PATH, 'utf-8'));
+    const n = pending.rounds || 0;
+    if (n > 0) {
+      lines.push('');
+      lines.push(`⚡ RECORDER 触发：有 ${n} 轮未处理的对话记录。`);
+      lines.push('请在回复用户之前，使用 Agent tool 启动后台 Recorder：');
+      lines.push('Agent(run_in_background: true, description: "后台 Recorder", prompt: 下方 prompt)');
+      lines.push('');
+      lines.push('--- RECORDER PROMPT START ---');
+      lines.push('你是 thinking-tree 后台 Recorder agent。');
+      lines.push('');
+      lines.push('## Recorder');
+      lines.push(`读取 ~/.thinking-tree/.session-log.md 的最新 ${n} 条记录（从末尾往前数 ${n} 个 "## Round" 段落）。`);
+      lines.push('逐条评估：有独立的新观点/认知/发现 → 捕获；纯工程操作/重复 → 跳过。');
+      lines.push('捕获时追加到 ~/.thinking-tree/fragments.md 末尾：');
+      lines.push('- 先读 ~/.thinking-tree/.meta.json 获取 fragments.nextId');
+      lines.push('- 格式：<!-- frag:N date:YYYY-MM-DD --> 换行 ## #标签 标题（日期）换行 内容 换行 ---');
+      lines.push('- 每写一条：.meta.json 的 count++ 和 nextId++');
+      lines.push('');
+      lines.push('## Router（可选）');
+      lines.push('读 .meta.json，检查 fragments.count - lastReduceCount >= 20 或 roundCount - lastRouterRound >= 10。');
+      lines.push('满足任一 → 列出 ~/.thinking-tree/*.md（排除 fragments/questions/todos/.session-log），');
+      lines.push('逐条碎片判断是否与某思路文件高度匹配，匹配的搬运过去并从 fragments.md 删除。');
+      lines.push('更新 .meta.json 的 lastReduceCount 和 lastRouterRound。');
+      lines.push('');
+      lines.push('## 完成后');
+      lines.push('更新 .meta.json，删除 ~/.thinking-tree/.pending-review。');
+      lines.push('--- RECORDER PROMPT END ---');
+    }
+  }
+} catch { /* non-fatal */ }
 
 console.log(lines.join('\n'));
