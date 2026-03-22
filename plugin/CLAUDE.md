@@ -2,7 +2,7 @@
 
 持久化思考系统 — 跨 Claude Code 会话捕获、组织、演化散落的想法。
 
-> 思考模式由 /thinking-tree:think 命令切换启用/禁用。
+> 思考模式由 `/thinking-tree:think` 命令切换启用/禁用。
 
 ## 数据位置
 
@@ -16,18 +16,36 @@
 ├── 思路体系（*.md）── 结晶态，有主线（理解）
 ├── fragments.md    ── 有价值但还没归位（观察）
 ├── questions.md    ── 明确的"不知道"（探索）
-└── todos.md        ── 想清楚后的行动意图（行动）
+├── todos.md        ── 想清楚后的行动意图（行动）
+├── .session-log.md ── 对话日志索引（代码级自动维护）
+└── .meta.json      ── 碎片计数、轮次统计等元数据
 ```
 
-## 角色
+## 架构
 
-主对话：正常与用户交流。Recorder 由 Stop hook 自动触发，无需主对话手动 spawn。
-子 agent（recorder）：评估对话内容，按路由规则写入 ~/.thinking-tree/。
+```
+每轮结束 → Stop hook (command, async) → turn-logger.js（零阻塞）
+  ├─ 解析 transcript JSONL → 提取用户消息 + AI 回复
+  ├─ 追加到 .session-log.md
+  ├─ .meta.json roundCount++
+  └─ 写 .pending-review 标记
 
-## Recorder 触发机制
+会话启动 → SessionStart hook (command) → inject-context.js
+  ├─ 同步 plugin rules → ~/.claude/rules/
+  ├─ 注入近期碎片/问题/行动项上下文
+  └─ 检测 .pending-review → 输出 ⚡ 指令触发后台 Recorder
 
-Recorder 由 plugin 的 Stop hook 自动触发。
-主对话**不需要**手动 spawn recorder — hook 会在每轮回复结束后自动触发。
+主 AI 看到 ⚡ → Agent(run_in_background: true) → 后台 Recorder + Router
+  ├─ 读 session-log.md 新增条目
+  ├─ Recorder: 评估新洞察 → 写 fragments.md
+  ├─ Router: 阈值满足 → 路由碎片到思路文件
+  └─ 更新 .meta.json，删除 .pending-review
+```
+
+三个角色：
+- **Logger**：代码级（turn-logger.js），每轮自动运行，零阻塞
+- **Recorder**：AI 级（后台 agent），评估对话价值，捕获洞察到碎片池
+- **Router**：AI 级（后台 agent），将碎片归类到匹配的思路文件
 
 ## 路由规则
 
@@ -54,78 +72,21 @@ Recorder 由 plugin 的 Stop hook 自动触发。
 思路/碎片/问题 ──→ 衍生行动项 ──→ 执行后反馈进各空间
 ```
 
-## 主对话输出规则
+## 碎片格式
 
-- ASCII 图表达关系，不用段落解释
-- 一两句锐利表述，不要三段铺垫
-- 用户看一眼说"对" → 成功；需要读三段才理解 → 失败
-- 表格只在实体对比时用，不是为了"看起来整齐"
+```markdown
+<!-- frag:N date:YYYY-MM-DD -->
+## #标签 标题（日期）
+内容
+---
+```
 
-## 不做的事
+HTML 注释用于代码级计数（inject-context.js），渲染时不可见。
 
-- **不问"我可以写吗"** — 直接做，做完报告
-- **不做段落式总结** — 那是搬运，不是澄清
-- **不替用户创作** — 不确定就提炼成问题，不猜
-- **不解释为什么这么分类** — 除非用户问
+## 技能
 
-## 纠正协议
-
-| 用户说 | agent 做 |
-|--------|----------|
-| "不对" | 问哪里不对 |
-| "移到碎片/思路/问题" | 直接移 |
-| "这个不用记" | 删除 |
-| "漏了 XXX" | 补记 |
-
-## 子 agent（recorder）协议
-
-子 agent 收到主 AI 传入的内容后，按以下步骤执行：
-
-### 1. 更新 session log
-- 读取 `~/.thinking-tree/.session-log.md`（可能不存在，首轮为空）
-- 将传入的对话内容（用户消息 + AI 回复）追加到末尾
-- 如果 log 超过 20 轮，删除最早的条目，保留最近 20 轮
-
-### 2. 评估内容
-- 读取 plugin CLAUDE.md 了解路由规则
-- 读取 `~/.thinking-tree/fragments.md` 了解已有碎片（避免重复）
-- 读取 `~/.thinking-tree/questions.md` 了解已有问题（避免重复）
-- 结合 session log 的上下文，评估最新对话中是否有：
-  - 新的独立洞察 → 写入 fragments.md
-  - 对已有思路文件的推进 → 更新对应文件
-  - 新的明确疑问 → 写入 questions.md
-  - 具体的行动意图 → 写入 todos.md
-  - 项目工程相关 → 不进 thinking-tree
-
-### 3. 执行
-- 有值得记录的 → 写入对应文件 → 报告写了什么、放在哪
-- 没有值得记录的 → 直接结束
-
-注意：只处理 session log 和传入内容中实际存在的信息，不要臆造。
-
-## 各空间质量标准
-
-### 碎片
-- 一个标题 + 一段话 + 可选的示意图
-- 带 #标签 方便归类
-- 不要求完整，但要求有明确的一个点
-
-### 思路文件
-- 主线清晰：从哪来 → 到哪去，每节在主线上有位置
-- 不留散尾巴：未解问题去 questions.md，未归位的想法去 fragments.md
-- 读完能一句话概括：概括不了 = 主线不清晰或塞了太多主题
-- 视觉优先：ASCII 图表达关系，短句表达结论，段落只在必要时用
-
-### 开放问题
-- 一个具体的疑问（不是模糊的"待研究"）
-- 附上来源上下文（从哪个讨论中产生的）
-- 解答后结论进思路体系，问题标记 ✓
-
-### 行动项
-- 不是"待做事项"，而是**思考的产出形态**
-- 具体到能执行（包含条件/目标/验证方式）
-- 来源明确：来自某个具体的思路/碎片/问题
-- 非工程类任务（工程任务进 DECISIONS.md）
+- `/think` — 开关思考模式（重命名 clarifier.md ↔ clarifier.md.off）
+- `/reduce` — 交互式碎片整理（去重、归类、清理过时）
 
 ## Web Viewer
 
