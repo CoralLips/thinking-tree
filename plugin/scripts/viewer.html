@@ -570,16 +570,20 @@ async function fetchData() {
   }
 }
 
+let sseRetryDelay = 1000;
 function connectSSE() {
   const es = new EventSource('/api/watch');
   es.addEventListener('update', e => {
+    sseRetryDelay = 1000; // reset on success
     if (editingBlock >= 0 || editingThought) return;
     data = JSON.parse(e.data);
     updateStats();
     render();
   });
   es.onerror = () => {
-    setTimeout(() => { es.close(); connectSSE(); }, 3000);
+    es.close();
+    setTimeout(connectSSE, sseRetryDelay);
+    sseRetryDelay = Math.min(sseRetryDelay * 2, 30000); // exponential backoff, max 30s
   };
 }
 

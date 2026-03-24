@@ -27,25 +27,22 @@
 每轮结束 → Stop hook (command, async) → turn-logger.js（零阻塞）
   ├─ 解析 transcript JSONL → 提取用户消息 + AI 回复
   ├─ 追加到 .session-log.md
-  ├─ .meta.json roundCount++
-  └─ 写 .pending-review 标记
+  └─ .meta.json roundCount++
+
+主 AI 规则 → 发现洞察时直接写 fragment（~200 tokens/条）
+  └─ 读 .meta.json → 追加 fragments.md → 更新 .meta.json
+
+整理/路由 → 用户手动触发 /reduce
 
 会话启动 → SessionStart hook (command) → inject-context.js
   ├─ 同步 plugin rules → ~/.claude/rules/
   ├─ 注入近期碎片/问题/行动项上下文
-  └─ 检测 .pending-review → 输出 ⚡ 指令触发后台 Recorder
-
-主 AI 看到 ⚡ → Agent(run_in_background: true) → 后台 Recorder + Router
-  ├─ 读 session-log.md 新增条目
-  ├─ Recorder: 评估新洞察 → 写 fragments.md
-  ├─ Router: 阈值满足 → 路由碎片到思路文件
-  └─ 更新 .meta.json，删除 .pending-review
+  └─ 无条件拉起 Web Viewer server（EADDRINUSE 自动退出）
 ```
 
-三个角色：
-- **Logger**：代码级（turn-logger.js），每轮自动运行，零阻塞
-- **Recorder**：AI 级（后台 agent），评估对话价值，捕获洞察到碎片池
-- **Router**：AI 级（后台 agent），将碎片归类到匹配的思路文件
+两个角色：
+- **Logger**：代码级（turn-logger.js），每轮自动运行，零 token
+- **主 AI 规则**：clarifier.md 规则驱动，发现洞察时直接写碎片，~200 tokens/条
 
 ## 路由规则
 
@@ -90,5 +87,7 @@ HTML 注释用于代码级计数（inject-context.js），渲染时不可见。
 
 ## Web Viewer
 
-启动：`node <plugin-root>/scripts/thinking-tree-server.js`
-访问：http://localhost:3456
+- 访问：http://localhost:3456
+- SessionStart 时无条件拉起（零 token，纯 Node.js）
+- 绿点：/think 模式状态指示（绿=开启，灰=关闭）
+- 功能：思路文件浏览/编辑 + 碎片/问题/行动 block 编辑 + done 勾选
