@@ -217,6 +217,15 @@ const server = http.createServer((req, res) => {
   res.end(VIEWER_HTML);
 });
 
+server.on('error', (err) => {
+  if (err.code === 'EADDRINUSE') {
+    // Already running — exit silently (fired by inject-context.js auto-start)
+    process.exit(0);
+  }
+  console.error('Server error:', err.message);
+  process.exit(1);
+});
+
 server.listen(PORT, () => {
   console.log(`thinking-tree viewer: http://localhost:${PORT}`);
   console.log(`Watching: ${TREE}`);

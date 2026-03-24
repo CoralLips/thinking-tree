@@ -10,7 +10,6 @@ const HOME = process.env.USERPROFILE || process.env.HOME;
 const TREE = path.join(HOME, '.thinking-tree');
 const SESSION_LOG = path.join(TREE, '.session-log.md');
 const META_PATH = path.join(TREE, '.meta.json');
-const PENDING_PATH = path.join(TREE, '.pending-review');
 const MAX_ROUNDS = 15;
 
 // --- Read stdin (Stop hook provides JSON) ---
@@ -64,16 +63,6 @@ function run(data) {
   // --- Trim session log (FIFO, keep last MAX_ROUNDS) ---
   trimSessionLog();
 
-  // --- Mark pending review ---
-  let pending;
-  try {
-    pending = JSON.parse(fs.readFileSync(PENDING_PATH, 'utf-8'));
-    pending.rounds++;
-  } catch {
-    pending = { rounds: 1, since: now.toISOString() };
-  }
-  if (transcriptPath) pending.transcriptPath = transcriptPath;
-  fs.writeFileSync(PENDING_PATH, JSON.stringify(pending, null, 2) + '\n', 'utf-8');
 }
 
 // --- Helpers ---
@@ -98,28 +87,14 @@ function extractLastUserMessage(transcriptPath) {
   try {
     const content = fs.readFileSync(transcriptPath, 'utf-8');
     const lines = content.trim().split('\n');
-    // Search from end for last user message
+    // User text lives in queue-operation/enqueue entries, NOT in type:"user" (those are tool_results)
     for (let i = lines.length - 1; i >= 0; i--) {
       try {
         const entry = JSON.parse(lines[i]);
-        // Handle multiple possible JSONL formats
-        const isUser =
-          entry.type === 'user' ||
-          entry.type === 'human' ||
-          entry.role === 'user' ||
-          entry.role === 'human';
-        if (!isUser) continue;
-
-        // Extract text from content (string or array)
-        const c = entry.content || entry.message?.content || '';
-        if (typeof c === 'string') return c;
-        if (Array.isArray(c)) {
-          return c
-            .filter(p => p.type === 'text')
-            .map(p => p.text)
-            .join(' ');
+        if (entry.type === 'queue-operation' && entry.operation === 'enqueue') {
+          const c = entry.content || '';
+          if (typeof c === 'string' && c.trim()) return c;
         }
-        return String(c);
       } catch {
         // skip unparseable lines
       }
