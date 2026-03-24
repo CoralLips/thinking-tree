@@ -138,17 +138,14 @@ const VIEWER_PORT = 3456;
 const VIEWER_SCRIPT = path.join(PLUGIN_ROOT, 'scripts', 'thinking-tree-server.js');
 
 try {
-  const clarifierPath = path.join(RULES_DIR, 'clarifier.md');
-  if (fs.existsSync(clarifierPath)) {
-    const { spawn } = require('child_process');
-    const child = spawn(process.execPath, [VIEWER_SCRIPT, String(VIEWER_PORT)], {
-      detached: true,
-      stdio: 'ignore',
-      env: { ...process.env, USERPROFILE: HOME, HOME: HOME }
-    });
-    child.unref();
-    // Server handles EADDRINUSE gracefully — if already running, new process exits silently
-  }
+  const { spawn } = require('child_process');
+  const child = spawn(process.execPath, [VIEWER_SCRIPT, String(VIEWER_PORT)], {
+    detached: true,
+    stdio: 'ignore',
+    env: { ...process.env, USERPROFILE: HOME, HOME: HOME }
+  });
+  child.unref();
+  // Server handles EADDRINUSE gracefully — if already running, new process exits silently
 } catch {}
 
 lines.push('');

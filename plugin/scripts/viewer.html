@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>thinking-tree</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --primary: #7c3aed;
+  --primary-light: #a855f7;
+  --primary-bg: #f5f3ff;
+  --blue: #3b82f6;
+  --green: #22c55e;
+  --amber: #f59e0b;
+  --bg: #fafafa;
+  --white: #ffffff;
+  --border: #e5e7eb;
+  --border-light: #f3f4f6;
+  --text: #111827;
+  --text-secondary: #4b5563;
+  --text-dim: #9ca3af;
+  --radius: 8px;
+  --radius-lg: 12px;
+  --shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  background: var(--bg); color: var(--text); height: 100vh;
+  display: flex; flex-direction: column;
+}
+
+/* Header */
+header {
+  padding: 16px 28px; background: var(--white);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 14px;
+  box-shadow: var(--shadow);
+}
+header h1 {
+  font-size: 20px; font-weight: 700;
+  background: linear-gradient(135deg, var(--blue) 0%, var(--primary) 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+header .stats { font-size: 13px; color: var(--text-dim); margin-left: auto; }
+.think-dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--text-dim); display: inline-block;
+  cursor: help; transition: background 0.3s;
+}
+.think-dot.active {
+  background: var(--green);
+  animation: pulse 2s infinite;
+}
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+/* Main tabs */
+.tabs-main {
+  display: flex; background: var(--white);
+  border-bottom: 1px solid var(--border); padding: 0 20px;
+}
+.tab-main {
+  padding: 13px 20px; font-size: 15px; font-weight: 500;
+  cursor: pointer; border-bottom: 2.5px solid transparent;
+  color: var(--text-dim); transition: all 0.15s;
+}
+.tab-main:hover { color: var(--text-secondary); }
+.tab-main.active { color: var(--primary); border-bottom-color: var(--primary); }
+.tab-main .count {
+  background: var(--border-light); color: var(--text-secondary);
+  padding: 2px 8px; border-radius: 10px;
+  font-size: 12px; margin-left: 6px;
+}
+.tab-main.active .count { background: var(--primary-bg); color: var(--primary); }
+
+/* Pool sub-tabs */
+.tabs-pool {
+  display: none; background: var(--white);
+  border-bottom: 1px solid var(--border); padding: 0 20px;
+  gap: 4px;
+}
+.tabs-pool.visible { display: flex; }
+.pool-tab {
+  padding: 10px 16px; font-size: 14px; font-weight: 500;
+  cursor: pointer; border-bottom: 2px solid transparent;
+  color: var(--text-dim); transition: all 0.15s;
+  display: flex; align-items: center; gap: 6px;
+}
+.pool-tab:hover { color: var(--text-secondary); }
+.pool-tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+.pool-tab .count {
+  background: var(--border-light); color: var(--text-secondary);
+  padding: 1px 7px; border-radius: 10px; font-size: 11px;
+}
+.pool-tab.active .count { background: var(--primary-bg); color: var(--primary); }
+
+/* Type icons */
+.type-icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 20px; height: 20px; border-radius: 4px;
+  font-size: 11px; font-weight: 700; flex-shrink: 0;
+}
+.type-fragment { background: #ede9fe; color: var(--primary); }
+.type-question { background: #fef3c7; color: var(--amber); }
+.type-todo { background: #dcfce7; color: var(--green); }
+
+/* Layout */
+main { flex: 1; display: flex; overflow: hidden; }
+
+/* Left panel — thoughts file list */
+.panel-list {
+  width: 300px; display: flex; flex-direction: column;
+  background: var(--white); border-right: 1px solid var(--border);
+}
+.panel-list.hidden { display: none; }
+.list { flex: 1; overflow-y: auto; }
+.list::-webkit-scrollbar { width: 5px; }
+.list::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
+
+.file-item {
+  padding: 12px 18px; border-bottom: 1px solid var(--border-light);
+  cursor: pointer; font-size: 14px; line-height: 1.5;
+  color: var(--text); transition: background 0.1s;
+}
+.file-item:hover { background: var(--bg); }
+.file-item.active {
+  background: var(--primary-bg);
+  border-left: 3px solid var(--primary);
+  padding-left: 15px; color: var(--primary); font-weight: 500;
+}
+
+/* Content area */
+.panel-content {
+  flex: 1; display: flex; flex-direction: column;
+  min-width: 0; background: var(--white); overflow: hidden;
+}
+.panel-content-scroll {
+  flex: 1; overflow-y: auto;
+}
+.panel-content::-webkit-scrollbar { width: 5px; }
+.panel-content::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
+
+.content-inner { padding: 32px 44px; min-height: 100%; }
+
+/* Pool block */
+.pool-block {
+  padding: 12px 16px; margin: 0 -16px;
+  border-radius: var(--radius); cursor: text;
+  transition: background 0.15s, border-color 0.15s;
+  border: 1.5px solid transparent;
+  display: flex; gap: 12px; align-items: flex-start;
+}
+.pool-block:hover { background: var(--primary-bg); border-color: var(--border); }
+.pool-block .block-icon { margin-top: 4px; }
+.pool-block .block-body { flex: 1; min-width: 0; }
+.pool-block-separator {
+  border: none; border-top: 1px solid var(--border-light);
+  margin: 8px 0;
+}
+
+.pool-block.done { opacity: 0.45; }
+.pool-block .done-toggle {
+  width: 18px; height: 18px; border-radius: 4px;
+  border: 2px solid var(--border); background: var(--white);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  font-size: 11px; color: transparent; transition: all 0.15s;
+  flex-shrink: 0; margin-top: 4px;
+}
+.pool-block .done-toggle:hover { border-color: var(--primary); }
+.pool-block.done .done-toggle {
+  background: var(--green); border-color: var(--green); color: white;
+}
+.pool-block.editing {
+  background: var(--primary-bg); border-color: var(--primary);
+}
+.pool-block .block-editor {
+  width: 100%; border: none; outline: none;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+  font-size: 14px; line-height: 1.7; color: var(--text);
+  background: transparent; resize: none; overflow: hidden;
+}
+
+/* Thought doc editor */
+.content-inner.editor-fill {
+  display: flex; flex-direction: column; height: 100%;
+}
+.thought-editor {
+  width: 100%; flex: 1; min-height: 400px; border: none; outline: none;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+  font-size: 15px; line-height: 1.7; color: var(--text);
+  background: var(--white); resize: none;
+}
+
+/* Markdown styles */
+.md h1, .md h2, .md h3 { margin: 24px 0 12px; }
+.md h1 { font-size: 24px; font-weight: 700; }
+.md h2 { font-size: 19px; font-weight: 600; }
+.md h3 { font-size: 16px; font-weight: 600; color: var(--text-secondary); }
+.md p { margin: 12px 0; line-height: 1.8; color: var(--text-secondary); font-size: 15px; }
+.md strong { color: var(--text); font-weight: 600; }
+.md code {
+  background: var(--bg); padding: 2px 7px;
+  border-radius: 4px; font-size: 14px; color: var(--primary);
+}
+.md pre {
+  background: #1e1e2e; color: #cdd6f4;
+  padding: 18px 22px; border-radius: var(--radius-lg);
+  overflow-x: auto; margin: 16px 0; font-size: 14px; line-height: 1.6;
+}
+.md pre code { background: none; color: inherit; padding: 0; }
+.md ul, .md ol { padding-left: 24px; margin: 12px 0; }
+.md li { margin: 6px 0; line-height: 1.7; color: var(--text-secondary); font-size: 15px; }
+.md table { border-collapse: collapse; margin: 16px 0; width: 100%; }
+.md th, .md td {
+  padding: 10px 16px; border: 1px solid var(--border);
+  font-size: 14px; line-height: 1.5;
+}
+.md th { background: var(--bg); font-weight: 600; text-align: left; }
+.md blockquote {
+  border-left: 3px solid var(--primary);
+  padding: 10px 18px; margin: 16px 0;
+  background: var(--primary-bg); border-radius: 0 var(--radius) var(--radius) 0;
+  color: var(--text-secondary);
+}
+.md a { color: var(--primary); text-decoration: none; }
+.md a:hover { text-decoration: underline; }
+.md hr { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
+
+.empty {
+  display: flex; align-items: center; justify-content: center;
+  height: 100%; color: var(--text-dim); font-size: 15px;
+}
+.toast {
+  position: fixed; bottom: 24px; right: 24px;
+  padding: 12px 22px; border-radius: var(--radius);
+  background: var(--text); color: white; font-size: 14px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  animation: fadeUp 0.2s ease; z-index: 100;
+}
+@keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+</style>
+</head>
+<body>
+<header>
+  <span class="think-dot" id="thinkDot" title="/think 模式：检测中..."></span>
+  <h1>thinking-tree</h1>
+  <span class="stats" id="stats"></span>
+</header>
+<div class="tabs-main">
+  <div class="tab-main" data-tab="thoughts">思路体系<span class="count" id="countThoughts">0</span></div>
+  <div class="tab-main active" data-tab="pool">思考池</div>
+</div>
+<div class="tabs-pool visible" id="poolTabs">
+  <div class="pool-tab active" data-pool="fragments">
+    <span class="type-icon type-fragment">F</span>碎片<span class="count" id="countFragments">0</span>
+  </div>
+  <div class="pool-tab" data-pool="questions">
+    <span class="type-icon type-question">Q</span>问题<span class="count" id="countQuestions">0</span>
+  </div>
+  <div class="pool-tab" data-pool="todos">
+    <span class="type-icon type-todo">T</span>行动<span class="count" id="countTodos">0</span>
+  </div>
+</div>
+<main>
+  <div class="panel-list hidden" id="fileList">
+    <div class="list" id="list"></div>
+  </div>
+  <div class="panel-content" id="content">
+    <div class="panel-content-scroll"><div class="content-inner"><div class="empty">选择内容查看</div></div></div>
+  </div>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script>
+let data = { fragments: [], questions: [], todos: [], thoughts: [] };
+let currentTab = 'pool';       // 'thoughts' | 'pool'
+let poolSubTab = 'fragments';  // 'fragments' | 'questions' | 'todos'
+let selectedFile = -1;         // thoughts file index
+let editingBlock = -1;         // pool block index being edited
+let editingThought = false;    // thought doc in edit mode
+let saving = false;
+
+// --- Main tabs ---
+document.querySelectorAll('.tab-main').forEach(tab => {
+  tab.addEventListener('click', () => {
+    flushAll();
+    document.querySelectorAll('.tab-main').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    currentTab = tab.dataset.tab;
+    editingBlock = -1; editingThought = false;
+    updateLayout();
+    render();
+  });
+});
+
+// --- Pool sub-tabs ---
+document.querySelectorAll('.pool-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    flushAll();
+    document.querySelectorAll('.pool-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    poolSubTab = tab.dataset.pool;
+    editingBlock = -1;
+    render();
+  });
+});
+
+function updateLayout() {
+  const fileList = document.getElementById('fileList');
+  const poolTabs = document.getElementById('poolTabs');
+  if (currentTab === 'thoughts') {
+    fileList.classList.remove('hidden');
+    poolTabs.classList.remove('visible');
+  } else {
+    fileList.classList.add('hidden');
+    poolTabs.classList.add('visible');
+  }
+}
+
+// --- Render ---
+function render() {
+  if (currentTab === 'thoughts') {
+    renderFileList();
+    renderThoughtDoc();
+  } else {
+    renderPool();
+  }
+}
+
+// --- Thoughts: file list ---
+function renderFileList() {
+  const list = document.getElementById('list');
+  list.innerHTML = data.thoughts.map((t, i) => {
+    const cls = i === selectedFile ? 'file-item active' : 'file-item';
+    return `<div class="${cls}" data-index="${i}">${t.title}</div>`;
+  }).join('');
+  list.querySelectorAll('.file-item').forEach(el => {
+    el.addEventListener('click', () => {
+      flushAll();
+      selectedFile = parseInt(el.dataset.index);
+      editingThought = false;
+      renderFileList();
+      renderThoughtDoc();
+    });
+  });
+}
+
+// --- Thoughts: document view ---
+function renderThoughtDoc() {
+  const content = document.getElementById('content');
+  if (selectedFile < 0 || selectedFile >= data.thoughts.length) {
+    content.innerHTML = '<div class="panel-content-scroll"><div class="content-inner"><div class="empty">选择左侧文件查看</div></div></div>';
+    return;
+  }
+  const thought = data.thoughts[selectedFile];
+  if (editingThought) {
+    content.innerHTML = `<div class="panel-content-scroll"><div class="content-inner editor-fill"><textarea class="thought-editor" id="thoughtEditor">${escapeHtml(thought.body)}</textarea></div></div>`;
+    const area = document.getElementById('thoughtEditor');
+    area.focus();
+    area.addEventListener('blur', () => saveThought());
+    area.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') { e.preventDefault(); editingThought = false; renderThoughtDoc(); }
+      if (e.key === 's' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); saveThought(); }
+    });
+  } else {
+    content.innerHTML = `<div class="panel-content-scroll"><div class="content-inner md" style="cursor:text">${marked.parse(thought.body)}</div></div>`;
+    content.querySelector('.content-inner').addEventListener('click', () => {
+      editingThought = true;
+      renderThoughtDoc();
+    });
+  }
+}
+
+async function saveThought() {
+  const area = document.getElementById('thoughtEditor');
+  if (!area || saving) return;
+  const thought = data.thoughts[selectedFile];
+  if (area.value === thought.body) { editingThought = false; renderThoughtDoc(); return; }
+  saving = true;
+  try {
+    const res = await fetch('/api/save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'thought', filename: thought.filename, content: area.value })
+    });
+    const result = await res.json();
+    if (result.ok) { showToast('已保存'); await fetchData(); }
+  } catch (e) { showToast('保存失败'); }
+  saving = false;
+  editingThought = false;
+  renderThoughtDoc();
+}
+
+// --- Pool: block rendering ---
+function getPoolItems() {
+  const map = { fragments: 'fragment', questions: 'question', todos: 'todo' };
+  return (data[poolSubTab] || []).map((item, i) => ({ ...item, poolType: map[poolSubTab], sourceIndex: i }));
+}
+
+function renderPool() {
+  const items = getPoolItems();
+  const content = document.getElementById('content');
+  if (!items.length) {
+    content.innerHTML = '<div class="panel-content-scroll"><div class="content-inner"><div class="empty">暂无内容</div></div></div>';
+    return;
+  }
+
+  const iconClass = { fragment: 'type-fragment', question: 'type-question', todo: 'type-todo' };
+  const iconLetter = { fragment: 'F', question: 'Q', todo: 'T' };
+  const hasDone = poolSubTab === 'questions' || poolSubTab === 'todos';
+
+  let html = '<div class="panel-content-scroll"><div class="content-inner">';
+  items.forEach((item, i) => {
+    if (i > 0) html += '<hr class="pool-block-separator">';
+    const ic = iconClass[item.poolType];
+    const il = iconLetter[item.poolType];
+    const doneClass = item.done ? ' done' : '';
+    if (i === editingBlock) {
+      const raw = `## ${item.title}\n\n${item.body}`;
+      html += `<div class="pool-block editing${doneClass}" data-index="${i}">
+        <span class="type-icon ${ic} block-icon">${il}</span>
+        <div class="block-body">
+          <textarea class="block-editor" data-index="${i}">${escapeHtml(raw)}</textarea>
+        </div>
+      </div>`;
+    } else {
+      const rendered = marked.parse(`## ${item.title}\n\n${item.body}`);
+      const toggleHtml = hasDone
+        ? `<div class="done-toggle" data-index="${i}" title="${item.done ? '标记为未完成' : '标记为已完成'}">${item.done ? '✓' : ''}</div>`
+        : '';
+      html += `<div class="pool-block${doneClass}" data-index="${i}">
+        <span class="type-icon ${ic} block-icon">${il}</span>
+        <div class="block-body md">${rendered}</div>
+        ${toggleHtml}
+      </div>`;
+    }
+  });
+  html += '</div></div>';
+  content.innerHTML = html;
+
+  // Done toggle
+  content.querySelectorAll('.done-toggle').forEach(el => {
+    el.addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleDone(parseInt(el.dataset.index));
+    });
+  });
+
+  // Click to edit
+  content.querySelectorAll('.pool-block:not(.editing)').forEach(el => {
+    el.addEventListener('click', () => {
+      flushAll();
+      editingBlock = parseInt(el.dataset.index);
+      renderPool();
+      const area = content.querySelector('.block-editor');
+      if (area) { area.focus(); autoResize(area); }
+    });
+  });
+
+  // Editor handlers
+  const area = content.querySelector('.block-editor');
+  if (area) {
+    autoResize(area);
+    area.addEventListener('input', () => autoResize(area));
+    area.addEventListener('blur', () => savePoolBlock());
+    area.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') { e.preventDefault(); editingBlock = -1; renderPool(); }
+      if (e.key === 's' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); savePoolBlock(); }
+    });
+  }
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = (el.scrollHeight + 2) + 'px';
+}
+
+async function savePoolBlock() {
+  const area = document.querySelector('.block-editor');
+  if (!area || editingBlock < 0 || saving) return;
+  const items = getPoolItems();
+  const item = items[editingBlock];
+  const raw = area.value;
+  const titleMatch = raw.match(/^## (.+)$/m);
+  const title = titleMatch ? titleMatch[1] : item.title;
+  const body = raw.replace(/^## .+\n*/m, '').trim();
+  if (title === item.title && body === item.body) { editingBlock = -1; renderPool(); return; }
+  saving = true;
+  try {
+    const res = await fetch('/api/save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: item.poolType, index: item.sourceIndex, title, content: body })
+    });
+    const result = await res.json();
+    if (result.ok) { showToast('已保存'); await fetchData(); }
+    else { showToast('保存失败'); }
+  } catch (e) { showToast('保存失败'); }
+  saving = false;
+  editingBlock = -1;
+  renderPool();
+}
+
+// --- Toggle done ---
+async function toggleDone(index) {
+  if (saving) return;
+  const items = getPoolItems();
+  const item = items[index];
+  const prefix = item.poolType === 'todo' ? '✅ ' : '✓ ';
+  let newTitle;
+  if (item.done) {
+    // Remove done prefix
+    newTitle = item.title.replace(/^(✅\s*|✓\s*)/, '');
+  } else {
+    // Add done prefix
+    newTitle = prefix + item.title;
+  }
+  saving = true;
+  try {
+    const res = await fetch('/api/save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: item.poolType, index: item.sourceIndex, title: newTitle, content: item.body })
+    });
+    const result = await res.json();
+    if (result.ok) { showToast(item.done ? '已取消完成' : '已标记完成'); await fetchData(); }
+  } catch (e) { showToast('操作失败'); }
+  saving = false;
+  renderPool();
+}
+
+// --- Flush any pending edits ---
+function flushAll() {
+  if (editingBlock >= 0) savePoolBlock();
+  if (editingThought) saveThought();
+  editingBlock = -1;
+  editingThought = false;
+}
+
+// --- Helpers ---
+function escapeHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function showToast(msg) {
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 2000);
+}
+
+function updateStats() {
+  document.getElementById('countThoughts').textContent = data.thoughts.length;
+  document.getElementById('countFragments').textContent = data.fragments.length;
+  document.getElementById('countQuestions').textContent = data.questions.filter(q => !q.done).length;
+  document.getElementById('countTodos').textContent = data.todos.filter(t => !t.done).length;
+  document.getElementById('stats').textContent =
+    `${data.fragments.length} 碎片 · ${data.questions.filter(q=>!q.done).length} 问题 · ${data.thoughts.length} 思路`;
+}
+
+async function fetchData() {
+  try {
+    const res = await fetch('/api/tree');
+    data = await res.json();
+    updateStats();
+    render();
+  } catch (e) {
+    console.error('Fetch failed:', e);
+  }
+}
+
+function connectSSE() {
+  const es = new EventSource('/api/watch');
+  es.addEventListener('update', e => {
+    if (editingBlock >= 0 || editingThought) return;
+    data = JSON.parse(e.data);
+    updateStats();
+    render();
+  });
+  es.onerror = () => {
+    setTimeout(() => { es.close(); connectSSE(); }, 3000);
+  };
+}
+
+async function checkThinkStatus() {
+  try {
+    const res = await fetch('/api/think-status');
+    const { active } = await res.json();
+    const dot = document.getElementById('thinkDot');
+    dot.classList.toggle('active', active);
+    dot.title = active ? '/think 模式：已开启（自动记录碎片）' : '/think 模式：已关闭';
+  } catch {}
+}
+
+fetchData();
+connectSSE();
+checkThinkStatus();
+setInterval(checkThinkStatus, 10000);
+</script>
+</body>
+</html>
