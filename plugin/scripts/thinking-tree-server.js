@@ -237,7 +237,7 @@ server.on('error', (err) => {
   process.exit(1);
 });
 
-server.listen(PORT, () => {
+server.listen(PORT, '127.0.0.1', () => {
   console.log(`thinking-tree viewer: http://localhost:${PORT}`);
   console.log(`Watching: ${TREE}`);
 });

@@ -87,7 +87,7 @@ function readMeta() {
   try {
     return JSON.parse(fs.readFileSync(META_PATH, 'utf-8'));
   } catch {
-    return { fragments: { count: 0, lastReduceCount: 0, lastReduceDate: null }, sessionLog: { roundCount: 0 } };
+    return { fragments: { count: 0, lastReduceCount: 0, lastReduceDate: null, nextId: 1 }, sessionLog: { roundCount: 0, lastRouterRound: 0 } };
   }
 }
 

@@ -68,6 +68,6 @@ Logger：Stop hook (command, async) 自动运行，零阻塞，代码级写 sess
 ```
 
 ### 路径说明
-- `~` 指用户 home 目录（当前系统为 `C:\Users\CL`）
+- `~` 指用户 home 目录
 - 所有 thinking-tree 文件位于 `~/.thinking-tree/`，不在项目目录中
 - 读写文件时使用绝对路径
