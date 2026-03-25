@@ -63,6 +63,8 @@ function run(data) {
   // --- Trim session log (FIFO, keep last MAX_ROUNDS) ---
   trimSessionLog();
 
+  // --- Feedback to console ---
+  console.log(`🌳 session-log: Round ${roundNum} recorded`);
 }
 
 // --- Helpers ---
