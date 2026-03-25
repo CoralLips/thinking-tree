@@ -1,0 +1,17 @@
+{
+  "name": "thinking-tree",
+  "version": "0.2.0",
+  "description": "Persistent thinking system — capture, organize, and evolve scattered thoughts across Claude Code sessions",
+  "author": {
+    "name": "CL"
+  },
+  "repository": "https://github.com/CoralLips/thinking-tree",
+  "license": "MIT",
+  "keywords": [
+    "thinking",
+    "memory",
+    "fragments",
+    "persistence",
+    "hooks"
+  ]
+}
