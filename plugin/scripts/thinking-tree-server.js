@@ -91,14 +91,17 @@ function getAllData() {
 // --- Save API ---
 
 function saveItem(body) {
+  if (!body || typeof body !== 'object') return { ok: false, error: 'invalid request' };
   const { type, index, title, content } = body;
+  if (type !== 'thought' && (!title || content == null)) return { ok: false, error: 'missing title or content' };
   const newSection = `## ${title}\n\n${content}`;
 
   if (type === 'thought') {
     // Prevent path traversal — only allow basename within TREE
     const safe = path.basename(body.filename || '');
     if (!safe || safe.startsWith('.')) return { ok: false, error: 'invalid filename' };
-    const filePath = path.join(TREE, safe);
+    const filePath = path.resolve(TREE, safe);
+    if (!filePath.startsWith(path.resolve(TREE))) return { ok: false, error: 'invalid path' };
     fs.writeFileSync(filePath, content, 'utf-8');
     return { ok: true };
   }
