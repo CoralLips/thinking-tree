@@ -21,7 +21,7 @@ Your insights emerge while working. They scatter across conversations and get lo
 5. **Review anytime** — web viewer at `http://localhost:3456`
 
 Every turn ends with a status indicator:
-- `📝 #tag Title` — fragment recorded
+- `📝 Title` — fragment recorded
 - `❓ Title` — question recorded
 - `🌳` — checked, nothing to record
 
@@ -53,6 +53,15 @@ Auto-starts on session start at [localhost:3456](http://localhost:3456).
 - Real-time sync (SSE) — edits in Claude or the viewer appear instantly
 - Dark/light theme toggle
 - Export all data as markdown
+
+## Update
+
+```
+/plugin → Marketplaces → Update marketplace
+/plugin → Installed → thinking-tree → Update
+```
+
+Both steps required — marketplace update pulls latest from GitHub, plugin update installs it.
 
 ## Data
 
