@@ -27,6 +27,10 @@ process.stdin.on('end', () => {
 });
 
 function run(data) {
+  // Skip if /think is OFF (clarifier.md not active)
+  const rulesDir = path.join(HOME, '.claude', 'rules');
+  if (!fs.existsSync(path.join(rulesDir, 'clarifier.md'))) return;
+
   const transcriptPath = data.transcript_path || '';
   const lastAiMsg = data.last_assistant_message || '';
   const sessionId = data.session_id || 'unknown';

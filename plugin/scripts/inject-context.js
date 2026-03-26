@@ -71,8 +71,13 @@ function readFile(name) {
 }
 
 function extractRecentFragments(content, count = 10) {
-  const titles = content.match(/^## .+$/gm) || [];
-  return titles.slice(-count).map(t => t.replace(/^## /, ''));
+  const sections = content.split(/\r?\n---\r?\n/);
+  const titles = [];
+  for (const section of sections) {
+    const match = section.match(/^## (.+)$/m);
+    if (match) titles.push(match[1]);
+  }
+  return titles.slice(-count);
 }
 
 function extractOpenQuestions(content, count = 5) {

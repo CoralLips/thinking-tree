@@ -21,7 +21,7 @@ description: Organize the thinking-tree fragment pool — deduplicate, classify,
 
 ### 2. 分析碎片
 
-对每个碎片（以 `## #` 开头的段落）逐条评估，分为四组：
+对每个碎片（以 `## ` 开头、由 `---` 分隔的段落）逐条评估，分为四组：
 
 | 组 | 判断标准 | 动作 |
 |----|---------|------|
@@ -102,7 +102,7 @@ description: Organize the thinking-tree fragment pool — deduplicate, classify,
 
 - 所有文件路径使用绝对路径
 - 不要创造新内容，只做整理和搬运
-- 碎片的 #标签 在合并时保留所有相关标签
+- 碎片合并时保留最完整的表述
 - AskUserQuestion 每次最多 4 个选项、4 个问题，碎片多时分批
 - 如果碎片数量很多（50+），优先处理重复和过时（确定性高），归类组可适当放宽
 - 归类到思路文件时保持该文件的既有风格和结构
