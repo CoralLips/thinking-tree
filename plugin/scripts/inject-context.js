@@ -71,7 +71,7 @@ function readFile(name) {
 }
 
 function extractRecentFragments(content, count = 10) {
-  const titles = content.match(/^## #.+$/gm) || [];
+  const titles = content.match(/^## .+$/gm) || [];
   return titles.slice(-count).map(t => t.replace(/^## /, ''));
 }
 

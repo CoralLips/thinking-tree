@@ -21,7 +21,7 @@ function parseFragments() {
   const sections = content.split(/\r?\n---\r?\n/);
   const items = [];
   for (const section of sections) {
-    const match = section.match(/^## (#.+)$/m);
+    const match = section.match(/^## (.+)$/m);
     if (match) {
       const title = match[1];
       const body = section.replace(/^## .+$/m, '').trim();
@@ -37,7 +37,7 @@ function parseQuestions() {
   const items = [];
   for (const section of sections) {
     const match = section.match(/^## (.+)$/m);
-    if (match && !match[1].startsWith('#') && match[1].trim() !== '') {
+    if (match && match[1].trim() !== '') {
       const title = match[1];
       const done = title.startsWith('✓');
       const body = section.replace(/^## .+$/m, '').trim();
