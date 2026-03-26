@@ -95,7 +95,10 @@ function saveItem(body) {
   const newSection = `## ${title}\n\n${content}`;
 
   if (type === 'thought') {
-    const filePath = path.join(TREE, body.filename);
+    // Prevent path traversal — only allow basename within TREE
+    const safe = path.basename(body.filename || '');
+    if (!safe || safe.startsWith('.')) return { ok: false, error: 'invalid filename' };
+    const filePath = path.join(TREE, safe);
     fs.writeFileSync(filePath, content, 'utf-8');
     return { ok: true };
   }
@@ -174,7 +177,12 @@ try {
 
 // --- HTTP Server ---
 
-const VIEWER_HTML = fs.readFileSync(path.join(__dirname, 'viewer.html'), 'utf-8');
+let VIEWER_HTML;
+try {
+  VIEWER_HTML = fs.readFileSync(path.join(__dirname, 'viewer.html'), 'utf-8');
+} catch {
+  VIEWER_HTML = '<!DOCTYPE html><html><body><h1>thinking-tree viewer</h1><p>viewer.html not found. Please reinstall the plugin.</p></body></html>';
+}
 
 const server = http.createServer((req, res) => {
   // API: get all data

@@ -39,7 +39,26 @@ function syncRules() {
   }
 }
 
-try { syncRules(); } catch (e) { /* non-fatal */ }
+try {
+  syncRules();
+} catch (e) {
+  console.error(`🌳 [thinking-tree] rules sync failed: ${e.message}`);
+}
+
+// --- First-run initialization ---
+try {
+  if (!fs.existsSync(TREE)) {
+    fs.mkdirSync(TREE, { recursive: true });
+    fs.writeFileSync(
+      path.join(TREE, '.meta.json'),
+      JSON.stringify({ fragments: { count: 0, lastReduceCount: 0, lastReduceDate: null, nextId: 1 }, sessionLog: { roundCount: 0, lastRouterRound: 0 } }, null, 2) + '\n',
+      'utf-8'
+    );
+    console.log('🌳 [thinking-tree] initialized ~/.thinking-tree/ — use /think to enable recording');
+  }
+} catch (e) {
+  console.error(`🌳 [thinking-tree] init failed: ${e.message}`);
+}
 
 // Session log trimming moved to turn-logger.js (Stop hook)
 

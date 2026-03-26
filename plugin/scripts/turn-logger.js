@@ -111,7 +111,7 @@ function trimSessionLog() {
   try {
     const content = fs.readFileSync(SESSION_LOG, 'utf-8');
     const roundStarts = [];
-    const regex = /^## Round /gm;
+    const regex = /^\r?## Round /gm;
     let match;
     while ((match = regex.exec(content)) !== null) {
       roundStarts.push(match.index);
