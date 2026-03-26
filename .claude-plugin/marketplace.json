@@ -10,7 +10,7 @@
   "plugins": [
     {
       "name": "thinking-tree",
-      "version": "0.2.0",
+      "version": "0.3.0",
       "source": "./plugin",
       "description": "Persistent thinking system — capture, organize, and evolve scattered thoughts across Claude Code sessions"
     }
