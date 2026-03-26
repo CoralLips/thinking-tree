@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -271,25 +271,25 @@ main { flex: 1; display: flex; overflow: hidden; }
 </head>
 <body>
 <header>
-  <span class="think-dot" id="thinkDot" title="/think 模式：检测中..."></span>
+  <span class="think-dot" id="thinkDot" title="/think mode: checking..."></span>
   <h1>thinking-tree</h1>
   <span class="stats" id="stats"></span>
-  <button class="header-btn" onclick="exportData()" title="导出所有数据">Export</button>
-  <button class="header-btn" id="themeBtn" onclick="toggleTheme()" title="切换主题"></button>
+  <button class="header-btn" onclick="exportData()" title="Export all data">Export</button>
+  <button class="header-btn" id="themeBtn" onclick="toggleTheme()" title="Toggle theme"></button>
 </header>
 <div class="tabs-main">
-  <div class="tab-main" data-tab="thoughts">思路体系<span class="count" id="countThoughts">0</span></div>
-  <div class="tab-main active" data-tab="pool">思考池</div>
+  <div class="tab-main" data-tab="thoughts">Thoughts<span class="count" id="countThoughts">0</span></div>
+  <div class="tab-main active" data-tab="pool">Pool</div>
 </div>
 <div class="tabs-pool visible" id="poolTabs">
   <div class="pool-tab active" data-pool="fragments">
-    <span class="type-icon type-fragment">F</span>碎片<span class="count" id="countFragments">0</span>
+    <span class="type-icon type-fragment">F</span>Fragments<span class="count" id="countFragments">0</span>
   </div>
   <div class="pool-tab" data-pool="questions">
-    <span class="type-icon type-question">Q</span>问题<span class="count" id="countQuestions">0</span>
+    <span class="type-icon type-question">Q</span>Questions<span class="count" id="countQuestions">0</span>
   </div>
   <div class="pool-tab" data-pool="todos">
-    <span class="type-icon type-todo">T</span>行动<span class="count" id="countTodos">0</span>
+    <span class="type-icon type-todo">T</span>Todos<span class="count" id="countTodos">0</span>
   </div>
 </div>
 <main>
@@ -297,7 +297,7 @@ main { flex: 1; display: flex; overflow: hidden; }
     <div class="list" id="list"></div>
   </div>
   <div class="panel-content" id="content">
-    <div class="panel-content-scroll"><div class="content-inner"><div class="empty">选择内容查看</div></div></div>
+    <div class="panel-content-scroll"><div class="content-inner"><div class="empty">Select an item to view</div></div></div>
   </div>
 </main>
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -397,7 +397,7 @@ function renderFileList() {
 function renderThoughtDoc() {
   const content = document.getElementById('content');
   if (selectedFile < 0 || selectedFile >= data.thoughts.length) {
-    content.innerHTML = '<div class="panel-content-scroll"><div class="content-inner"><div class="empty">选择左侧文件查看</div></div></div>';
+    content.innerHTML = '<div class="panel-content-scroll"><div class="content-inner"><div class="empty">Select a file from the list</div></div></div>';
     return;
   }
   const thought = data.thoughts[selectedFile];
@@ -432,8 +432,8 @@ async function saveThought() {
       body: JSON.stringify({ type: 'thought', filename: thought.filename, content: area.value })
     });
     const result = await res.json();
-    if (result.ok) { showToast('已保存'); await fetchData(); }
-  } catch (e) { showToast('保存失败'); }
+    if (result.ok) { showToast('Saved'); await fetchData(); }
+  } catch (e) { showToast('Save failed'); }
   saving = false;
   editingThought = false;
   renderThoughtDoc();
@@ -449,7 +449,7 @@ function renderPool() {
   const items = getPoolItems();
   const content = document.getElementById('content');
   if (!items.length) {
-    content.innerHTML = '<div class="panel-content-scroll"><div class="content-inner"><div class="empty">暂无内容</div></div></div>';
+    content.innerHTML = '<div class="panel-content-scroll"><div class="content-inner"><div class="empty">No items yet</div></div></div>';
     return;
   }
 
@@ -474,7 +474,7 @@ function renderPool() {
     } else {
       const rendered = marked.parse(`## ${item.title}\n\n${item.body}`);
       const toggleHtml = hasDone
-        ? `<div class="done-toggle" data-index="${i}" title="${item.done ? '标记为未完成' : '标记为已完成'}">${item.done ? '✓' : ''}</div>`
+        ? `<div class="done-toggle" data-index="${i}" title="${item.done ? 'Mark incomplete' : 'Mark done'}">${item.done ? '✓' : ''}</div>`
         : '';
       html += `<div class="pool-block${doneClass}" data-index="${i}">
         <span class="type-icon ${ic} block-icon">${il}</span>
@@ -541,9 +541,9 @@ async function savePoolBlock() {
       body: JSON.stringify({ type: item.poolType, index: item.sourceIndex, title, content: body })
     });
     const result = await res.json();
-    if (result.ok) { showToast('已保存'); await fetchData(); }
-    else { showToast('保存失败'); }
-  } catch (e) { showToast('保存失败'); }
+    if (result.ok) { showToast('Saved'); await fetchData(); }
+    else { showToast('Save failed'); }
+  } catch (e) { showToast('Save failed'); }
   saving = false;
   editingBlock = -1;
   renderPool();
@@ -571,8 +571,8 @@ async function toggleDone(index) {
       body: JSON.stringify({ type: item.poolType, index: item.sourceIndex, title: newTitle, content: item.body })
     });
     const result = await res.json();
-    if (result.ok) { showToast(item.done ? '已取消完成' : '已标记完成'); await fetchData(); }
-  } catch (e) { showToast('操作失败'); }
+    if (result.ok) { showToast(item.done ? 'Unmarked' : 'Done'); await fetchData(); }
+  } catch (e) { showToast('Failed'); }
   saving = false;
   renderPool();
 }
@@ -604,7 +604,7 @@ function updateStats() {
   document.getElementById('countQuestions').textContent = data.questions.filter(q => !q.done).length;
   document.getElementById('countTodos').textContent = data.todos.filter(t => !t.done).length;
   document.getElementById('stats').textContent =
-    `${data.fragments.length} 碎片 · ${data.questions.filter(q=>!q.done).length} 问题 · ${data.thoughts.length} 思路`;
+    `${data.fragments.length} fragments · ${data.questions.filter(q=>!q.done).length} questions · ${data.thoughts.length} thoughts`;
 }
 
 async function fetchData() {
@@ -641,7 +641,7 @@ async function checkThinkStatus() {
     const { active } = await res.json();
     const dot = document.getElementById('thinkDot');
     dot.classList.toggle('active', active);
-    dot.title = active ? '/think 模式：已开启（自动记录碎片）' : '/think 模式：已关闭';
+    dot.title = active ? '/think: ON (auto-recording)' : '/think: OFF';
   } catch {}
 }
 
@@ -675,21 +675,21 @@ function exportData() {
   let md = `# thinking-tree export (${now})\n\n`;
 
   if (data.thoughts.length) {
-    md += '---\n# 思路体系\n\n';
+    md += '---\n# Thoughts\n\n';
     data.thoughts.forEach(t => {
       md += `## ${t.title}\n\n${t.body}\n\n---\n\n`;
     });
   }
 
   if (data.fragments.length) {
-    md += '---\n# 碎片池\n\n';
+    md += '---\n# Fragments\n\n';
     data.fragments.forEach(f => {
       md += `## ${f.title}\n\n${f.body}\n\n---\n\n`;
     });
   }
 
   if (data.questions.length) {
-    md += '---\n# 开放问题\n\n';
+    md += '---\n# Questions\n\n';
     data.questions.forEach(q => {
       const mark = q.done ? ' [DONE]' : '';
       md += `## ${q.title}${mark}\n\n${q.body}\n\n---\n\n`;
@@ -697,7 +697,7 @@ function exportData() {
   }
 
   if (data.todos.length) {
-    md += '---\n# 行动项\n\n';
+    md += '---\n# Todos\n\n';
     data.todos.forEach(t => {
       const mark = t.done ? ' [DONE]' : '';
       md += `## ${t.title}${mark}\n\n${t.body}\n\n---\n\n`;
@@ -711,7 +711,7 @@ function exportData() {
   a.download = `thinking-tree-${now}.md`;
   a.click();
   URL.revokeObjectURL(url);
-  showToast('已导出');
+  showToast('Exported');
 }
 
 initTheme();
