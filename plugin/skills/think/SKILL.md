@@ -5,10 +5,12 @@ description: Toggle thinking-tree recording mode on/off. When enabled, a backgro
 
 # 切换思考模式
 
-运行脚本完成切换，然后**原样输出脚本的输出**，不要额外解释：
+脚本位于本 skill 的 `../../scripts/think-toggle.js`（相对于本文件目录）。
 
-```bash
-node "$CLAUDE_PLUGIN_ROOT/scripts/think-toggle.js"
+用系统给出的 **Base directory for this skill** 构造绝对路径，运行一次 bash 即可：
+
+```
+node "<base-directory>/../../scripts/think-toggle.js"
 ```
 
-`CLAUDE_PLUGIN_ROOT` 由 plugin 机制注入，指向本 plugin 安装目录。
+**原样输出脚本的 stdout**，不要额外解释。
