@@ -255,6 +255,19 @@ main { flex: 1; display: flex; overflow: hidden; }
 .md a:hover { text-decoration: underline; }
 .md hr { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
 
+.block-actions {
+  display: flex; flex-direction: column; gap: 4px;
+  flex-shrink: 0; margin-top: 4px;
+}
+.delete-btn {
+  width: 18px; height: 18px; border-radius: 4px;
+  border: 1.5px solid transparent; background: none;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  font-size: 14px; color: var(--text-dim); transition: all 0.15s; flex-shrink: 0;
+}
+.delete-btn:hover { color: #ef4444; border-color: #ef4444; }
+.pool-block.deleting { opacity: 0.15; transition: opacity 0.3s; pointer-events: none; }
+.toast .undo-link { color: var(--primary-light); cursor: pointer; margin-left: 8px; text-decoration: underline; }
 .empty {
   display: flex; align-items: center; justify-content: center;
   height: 100%; color: var(--text-dim); font-size: 15px;
@@ -463,23 +476,27 @@ function renderPool() {
     const ic = iconClass[item.poolType];
     const il = iconLetter[item.poolType];
     const doneClass = item.done ? ' done' : '';
+    const editClass = i === editingBlock ? ' editing' : '';
+
+    // Actions always visible
+    const toggleHtml = hasDone
+      ? `<div class="done-toggle" data-index="${i}" title="${item.done ? 'Mark incomplete' : 'Mark done'}">${item.done ? '✓' : ''}</div>`
+      : '';
+    const actionsHtml = `<div class="block-actions">${toggleHtml}<div class="delete-btn" data-index="${i}" title="Delete">&times;</div></div>`;
+
     if (i === editingBlock) {
       const raw = `## ${item.title}\n\n${item.body}`;
-      html += `<div class="pool-block editing${doneClass}" data-index="${i}">
+      html += `<div class="pool-block${editClass}${doneClass}" data-index="${i}">
         <span class="type-icon ${ic} block-icon">${il}</span>
-        <div class="block-body">
-          <textarea class="block-editor" data-index="${i}">${escapeHtml(raw)}</textarea>
-        </div>
+        <div class="block-body"><textarea class="block-editor" data-index="${i}">${escapeHtml(raw)}</textarea></div>
+        ${actionsHtml}
       </div>`;
     } else {
       const rendered = marked.parse(`## ${item.title}\n\n${item.body}`);
-      const toggleHtml = hasDone
-        ? `<div class="done-toggle" data-index="${i}" title="${item.done ? 'Mark incomplete' : 'Mark done'}">${item.done ? '✓' : ''}</div>`
-        : '';
       html += `<div class="pool-block${doneClass}" data-index="${i}">
         <span class="type-icon ${ic} block-icon">${il}</span>
         <div class="block-body md">${rendered}</div>
-        ${toggleHtml}
+        ${actionsHtml}
       </div>`;
     }
   });
@@ -491,6 +508,14 @@ function renderPool() {
     el.addEventListener('click', (e) => {
       e.stopPropagation();
       toggleDone(parseInt(el.dataset.index));
+    });
+  });
+
+  // Delete buttons
+  content.querySelectorAll('.delete-btn').forEach(el => {
+    el.addEventListener('click', (e) => {
+      e.stopPropagation();
+      deletePoolBlock(parseInt(el.dataset.index));
     });
   });
 
@@ -575,6 +600,47 @@ async function toggleDone(index) {
   } catch (e) { showToast('Failed'); }
   saving = false;
   renderPool();
+}
+
+// --- Delete with undo ---
+let pendingDelete = null;
+
+function deletePoolBlock(index) {
+  if (saving || pendingDelete) return;
+  const items = getPoolItems();
+  const item = items[index];
+
+  // Visually fade out
+  const block = document.querySelector(`.pool-block[data-index="${index}"]`);
+  if (block) block.classList.add('deleting');
+
+  // Undo toast
+  const toast = document.createElement('div');
+  toast.className = 'toast';
+  toast.innerHTML = `Deleted &middot; <span class="undo-link">Undo</span>`;
+  document.body.appendChild(toast);
+
+  toast.querySelector('.undo-link').addEventListener('click', () => {
+    clearTimeout(pendingDelete);
+    pendingDelete = null;
+    if (block) block.classList.remove('deleting');
+    toast.remove();
+  });
+
+  pendingDelete = setTimeout(async () => {
+    try {
+      const res = await fetch('/api/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: item.poolType, index: item.sourceIndex })
+      });
+      const result = await res.json();
+      if (result.ok) await fetchData();
+      else showToast('Delete failed');
+    } catch { showToast('Delete failed'); }
+    toast.remove();
+    pendingDelete = null;
+  }, 3000);
 }
 
 // --- Flush any pending edits ---

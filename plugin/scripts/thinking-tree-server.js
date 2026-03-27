@@ -155,6 +155,65 @@ function saveItem(body) {
   return { ok: true };
 }
 
+// --- Delete API ---
+
+function deleteItem(body) {
+  if (!body || typeof body !== 'object') return { ok: false, error: 'invalid request' };
+  const { type, index } = body;
+  if (typeof index !== 'number') return { ok: false, error: 'missing index' };
+
+  const fileMap = { fragment: 'fragments.md', question: 'questions.md', todo: 'todos.md' };
+  const filename = fileMap[type];
+  if (!filename) return { ok: false, error: 'unknown type' };
+
+  const raw = readFile(filename);
+  const parts = raw.split(/(\r?\n---\r?\n)/);
+
+  const sections = [];
+  const seps = [];
+  let cur = '';
+  for (const p of parts) {
+    if (/^\r?\n---\r?\n$/.test(p)) { sections.push(cur); seps.push(p); cur = ''; }
+    else cur += p;
+  }
+  sections.push(cur);
+
+  // Find Nth section with ## header
+  const itemIndices = [];
+  for (let i = 0; i < sections.length; i++) {
+    if (/^## .+$/m.test(sections[i])) itemIndices.push(i);
+  }
+  if (index < 0 || index >= itemIndices.length) return { ok: false, error: 'index out of range' };
+  const target = itemIndices[index];
+
+  if (target === 0) {
+    // First section may contain file header — preserve content before <!-- frag: or ##
+    const s = sections[0];
+    const cutAt = s.search(/^(<!-- (frag|question|todo):\d+[^>]*-->[\r\n]*)?## /m);
+    if (cutAt > 0) {
+      sections[0] = s.slice(0, cutAt).replace(/\s+$/, '\n');
+      if (seps.length > 0) seps.splice(0, 1);
+    } else {
+      sections.splice(0, 1);
+      if (seps.length > 0) seps.splice(0, 1);
+    }
+  } else {
+    sections.splice(target, 1);
+    const sepIdx = target - 1;
+    if (sepIdx >= 0 && sepIdx < seps.length) seps.splice(sepIdx, 1);
+  }
+
+  let result = '';
+  for (let i = 0; i < sections.length; i++) {
+    result += sections[i];
+    if (i < seps.length) result += seps[i];
+  }
+  result = result.replace(/\n{3,}/g, '\n\n');
+
+  fs.writeFileSync(path.join(TREE, filename), result, 'utf-8');
+  return { ok: true };
+}
+
 // --- SSE ---
 
 const sseClients = new Set();
@@ -180,11 +239,11 @@ try {
 
 // --- HTTP Server ---
 
-let VIEWER_HTML;
-try {
-  VIEWER_HTML = fs.readFileSync(path.join(__dirname, 'viewer.html'), 'utf-8');
-} catch {
-  VIEWER_HTML = '<!DOCTYPE html><html><body><h1>thinking-tree viewer</h1><p>viewer.html not found. Please reinstall the plugin.</p></body></html>';
+// Read viewer.html on each request (enables hot-reload after plugin update)
+const VIEWER_PATH = path.join(__dirname, 'viewer.html');
+const VIEWER_FALLBACK = '<!DOCTYPE html><html><body><h1>thinking-tree viewer</h1><p>viewer.html not found. Please reinstall the plugin.</p></body></html>';
+function getViewerHtml() {
+  try { return fs.readFileSync(VIEWER_PATH, 'utf-8'); } catch { return VIEWER_FALLBACK; }
 }
 
 const server = http.createServer((req, res) => {
@@ -202,6 +261,23 @@ const server = http.createServer((req, res) => {
     req.on('end', () => {
       try {
         const result = saveItem(JSON.parse(body));
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(result));
+      } catch (e) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: false, error: e.message }));
+      }
+    });
+    return;
+  }
+
+  // API: delete item
+  if (req.url === '/api/delete' && req.method === 'POST') {
+    let body = '';
+    req.on('data', c => body += c);
+    req.on('end', () => {
+      try {
+        const result = deleteItem(JSON.parse(body));
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(result));
       } catch (e) {
@@ -234,9 +310,9 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // Serve viewer HTML
+  // Serve viewer HTML (re-read each time for hot-reload)
   res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-  res.end(VIEWER_HTML);
+  res.end(getViewerHtml());
 });
 
 server.on('error', (err) => {
