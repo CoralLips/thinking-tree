@@ -27,32 +27,29 @@
 
 ## 记录操作
 
-### 碎片
-1. 读 `~/.thinking-tree/.meta.json` 获取 `fragments.nextId`
-2. 追加到 `~/.thinking-tree/fragments.md` 末尾：
-   ```
-   <!-- frag:N date:YYYY-MM-DD -->
-   ## 标题（日期）
-   一段话描述。
-   ---
-   ```
-3. 更新 `.meta.json`：`nextId++`，`count++`
+通过原子写入脚本 `write-item.js` 执行，**不要直接 Edit/Write 文件**。
 
-### 问题
-追加到 `~/.thinking-tree/questions.md` 末尾：
-```
-## 问题标题
-来源：从哪个讨论中产生的
-具体描述。
----
+脚本位于插件 `scripts/write-item.js`。用 Bash 调用：
+
+```bash
+echo '{"type":"fragment","title":"标题（日期）","body":"一段话描述。"}' | node ~/.thinking-tree/bin/write-item.js
 ```
 
-## 反馈（每轮必须）
+- `type`：`"fragment"` | `"question"` | `"todo"`
+- `title`：标题文本（不带 `## ` 前缀）
+- `body`：内容文本
+- 碎片的 frag ID 和 meta.json 由脚本自动管理
 
-回复末尾**必须**附一行状态，让用户知道系统在运行：
+问题的 body 格式：`来源：xxx\n具体描述。`
+
+## 反馈
+
+仅在**回复用户消息**时，末尾附一行状态：
 - 记录了碎片：`📝 标题`
 - 记录了问题：`❓ 标题`
 - 没有记录：`🌳`
+
+**不附状态行的情况**：Hook 输出（tsc 结果、session-log、插件日志）、系统通知、tool 结果。这些不是用户消息，**不回应、不附状态**。
 
 ## 不记录
 - 重复已有碎片的内容

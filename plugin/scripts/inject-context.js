@@ -45,6 +45,20 @@ try {
   console.error(`🌳 [thinking-tree] rules sync failed: ${e.message}`);
 }
 
+// --- Deploy write-item.js to ~/.thinking-tree/bin/ ---
+try {
+  const binDir = path.join(TREE, 'bin');
+  fs.mkdirSync(binDir, { recursive: true });
+  const src = path.join(PLUGIN_ROOT, 'scripts', 'write-item.js');
+  const dest = path.join(binDir, 'write-item.js');
+  if (fs.existsSync(src)) {
+    const srcContent = fs.readFileSync(src, 'utf-8');
+    let destContent = '';
+    try { destContent = fs.readFileSync(dest, 'utf-8'); } catch {}
+    if (srcContent !== destContent) fs.writeFileSync(dest, srcContent, 'utf-8');
+  }
+} catch { /* non-fatal */ }
+
 // --- First-run initialization ---
 try {
   if (!fs.existsSync(TREE)) {

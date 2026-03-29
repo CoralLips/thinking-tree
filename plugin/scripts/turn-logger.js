@@ -31,9 +31,21 @@ function run(data) {
   const rulesDir = path.join(HOME, '.claude', 'rules');
   if (!fs.existsSync(path.join(rulesDir, 'clarifier.md'))) return;
 
+  // Debounce: skip if last run was < 5 seconds ago (prevents feedback loops)
+  const LOCK_FILE = path.join(TREE, '.logger-lock');
+  try {
+    const stat = fs.statSync(LOCK_FILE);
+    if (Date.now() - stat.mtimeMs < 5000) return; // Too soon, skip
+  } catch { /* no lock file, proceed */ }
+  try { fs.writeFileSync(LOCK_FILE, String(Date.now())); } catch { /* non-fatal */ }
+
   const transcriptPath = data.transcript_path || '';
   const lastAiMsg = data.last_assistant_message || '';
   const sessionId = data.session_id || 'unknown';
+
+  // Skip loop responses: if AI message is very short, it's likely a feedback loop artifact
+  const stripped = lastAiMsg.replace(/[\s\u{1F300}-\u{1FAFF}]/gu, '');
+  if (stripped.length < 5) return;
 
   // --- Extract user message from transcript JSONL ---
   const userMsg = extractLastUserMessage(transcriptPath);
@@ -67,8 +79,7 @@ function run(data) {
   // --- Trim session log (FIFO, keep last MAX_ROUNDS) ---
   trimSessionLog();
 
-  // --- Feedback to console ---
-  console.log(`🌳 session-log: Round ${roundNum} recorded`);
+  // Silent — no console output to avoid triggering AI response loops
 }
 
 // --- Helpers ---
