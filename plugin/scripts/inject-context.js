@@ -91,7 +91,7 @@ function extractRecentFragments(content, count = 10) {
     const match = section.match(/^## (.+)$/m);
     if (match) titles.push(match[1]);
   }
-  return titles.slice(-count);
+  return titles.slice(0, count);
 }
 
 function extractOpenQuestions(content, count = 5) {
@@ -103,7 +103,7 @@ function extractOpenQuestions(content, count = 5) {
       open.push(match[1]);
     }
   }
-  return open.slice(-count);
+  return open.slice(0, count);
 }
 
 function extractPendingTodos(content) {
@@ -130,7 +130,9 @@ function readMeta() {
 }
 
 function writeMeta(meta) {
-  fs.writeFileSync(META_PATH, JSON.stringify(meta, null, 2) + '\n', 'utf-8');
+  const tmp = META_PATH + '.tmp';
+  fs.writeFileSync(tmp, JSON.stringify(meta, null, 2) + '\n', 'utf-8');
+  fs.renameSync(tmp, META_PATH);
 }
 
 // --- Main ---

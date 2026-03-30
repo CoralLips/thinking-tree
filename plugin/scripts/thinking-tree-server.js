@@ -25,7 +25,9 @@ function parseFragments() {
     if (match) {
       const title = match[1];
       const body = section.replace(/^## .+$/m, '').trim();
-      items.push({ title, body, type: 'fragment' });
+      const idMatch = section.match(/<!-- frag:(\d+)/);
+      const id = idMatch ? parseInt(idMatch[1]) : null;
+      items.push({ title, body, type: 'fragment', id });
     }
   }
   return items;
@@ -92,7 +94,7 @@ function getAllData() {
 
 function saveItem(body) {
   if (!body || typeof body !== 'object') return { ok: false, error: 'invalid request' };
-  const { type, index, title, content } = body;
+  const { type, id, index, title, content } = body;
   if (type !== 'thought' && (!title || content == null)) return { ok: false, error: 'missing title or content' };
   const newSection = `## ${title}\n\n${content}`;
 
@@ -128,14 +130,19 @@ function saveItem(body) {
   }
   sections.push(current);
 
-  // Find the section with matching ## title
+  // Find the target section — by frag:ID if available, fallback to index
   let sectionIdx = -1;
-  let count = 0;
-  for (let i = 0; i < sections.length; i++) {
-    const m = sections[i].match(/^## .+$/m);
-    if (m) {
-      if (count === index) { sectionIdx = i; break; }
-      count++;
+  if (type === 'fragment' && id != null) {
+    for (let i = 0; i < sections.length; i++) {
+      if (sections[i].includes(`<!-- frag:${id}`)) { sectionIdx = i; break; }
+    }
+  } else {
+    let count = 0;
+    for (let i = 0; i < sections.length; i++) {
+      if (/^## .+$/m.test(sections[i])) {
+        if (count === index) { sectionIdx = i; break; }
+        count++;
+      }
     }
   }
 
@@ -159,8 +166,8 @@ function saveItem(body) {
 
 function deleteItem(body) {
   if (!body || typeof body !== 'object') return { ok: false, error: 'invalid request' };
-  const { type, index } = body;
-  if (typeof index !== 'number') return { ok: false, error: 'missing index' };
+  const { type, id, index } = body;
+  if (id == null && typeof index !== 'number') return { ok: false, error: 'missing id or index' };
 
   const fileMap = { fragment: 'fragments.md', question: 'questions.md', todo: 'todos.md' };
   const filename = fileMap[type];
@@ -178,13 +185,21 @@ function deleteItem(body) {
   }
   sections.push(cur);
 
-  // Find Nth section with ## header
-  const itemIndices = [];
-  for (let i = 0; i < sections.length; i++) {
-    if (/^## .+$/m.test(sections[i])) itemIndices.push(i);
+  // Find target section — by frag:ID if available, fallback to index
+  let target = -1;
+  if (type === 'fragment' && id != null) {
+    for (let i = 0; i < sections.length; i++) {
+      if (sections[i].includes(`<!-- frag:${id}`)) { target = i; break; }
+    }
+  } else {
+    const itemIndices = [];
+    for (let i = 0; i < sections.length; i++) {
+      if (/^## .+$/m.test(sections[i])) itemIndices.push(i);
+    }
+    if (index < 0 || index >= itemIndices.length) return { ok: false, error: 'index out of range' };
+    target = itemIndices[index];
   }
-  if (index < 0 || index >= itemIndices.length) return { ok: false, error: 'index out of range' };
-  const target = itemIndices[index];
+  if (target < 0) return { ok: false, error: 'item not found' };
 
   if (target === 0) {
     // First section may contain file header — preserve content before <!-- frag: or ##

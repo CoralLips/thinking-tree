@@ -96,7 +96,9 @@ function readMeta() {
 }
 
 function writeMeta(meta) {
-  fs.writeFileSync(META_PATH, JSON.stringify(meta, null, 2) + '\n', 'utf-8');
+  const tmp = META_PATH + '.tmp';
+  fs.writeFileSync(tmp, JSON.stringify(meta, null, 2) + '\n', 'utf-8');
+  fs.renameSync(tmp, META_PATH);
 }
 
 function extractLastUserMessage(transcriptPath) {

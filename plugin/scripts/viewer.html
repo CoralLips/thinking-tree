@@ -455,7 +455,7 @@ async function saveThought() {
 // --- Pool: block rendering ---
 function getPoolItems() {
   const map = { fragments: 'fragment', questions: 'question', todos: 'todo' };
-  return (data[poolSubTab] || []).map((item, i) => ({ ...item, poolType: map[poolSubTab], sourceIndex: i }));
+  return (data[poolSubTab] || []).map((item, i) => ({ ...item, poolType: map[poolSubTab], sourceIndex: i, sourceId: item.id || null }));
 }
 
 function renderPool() {
@@ -563,7 +563,7 @@ async function savePoolBlock() {
     const res = await fetch('/api/save', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type: item.poolType, index: item.sourceIndex, title, content: body })
+      body: JSON.stringify({ type: item.poolType, id: item.sourceId, index: item.sourceIndex, title, content: body })
     });
     const result = await res.json();
     if (result.ok) { showToast('Saved'); await fetchData(); }
@@ -593,7 +593,7 @@ async function toggleDone(index) {
     const res = await fetch('/api/save', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type: item.poolType, index: item.sourceIndex, title: newTitle, content: item.body })
+      body: JSON.stringify({ type: item.poolType, id: item.sourceId, index: item.sourceIndex, title: newTitle, content: item.body })
     });
     const result = await res.json();
     if (result.ok) { showToast(item.done ? 'Unmarked' : 'Done'); await fetchData(); }
@@ -632,7 +632,7 @@ function deletePoolBlock(index) {
       const res = await fetch('/api/delete', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type: item.poolType, index: item.sourceIndex })
+        body: JSON.stringify({ type: item.poolType, id: item.sourceId, index: item.sourceIndex })
       });
       const result = await res.json();
       if (result.ok) await fetchData();
