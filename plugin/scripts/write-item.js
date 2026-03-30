@@ -62,10 +62,36 @@ function write(data) {
     entry = `\n## ${title}\n\n${body}\n---\n`;
   }
 
-  // Atomic append
-  fs.appendFileSync(filePath, entry, 'utf-8');
+  // Prepend after header (new items on top, old items below)
+  if (fs.existsSync(filePath)) {
+    const content = fs.readFileSync(filePath, 'utf-8');
+    // Find the end of the header section (first --- or first <!-- or first ## after initial lines)
+    const headerEnd = findHeaderEnd(content);
+    const header = content.slice(0, headerEnd);
+    const body_rest = content.slice(headerEnd);
+    const tmp = filePath + '.tmp';
+    fs.writeFileSync(tmp, header + entry + '\n' + body_rest.replace(/^\n+/, ''), 'utf-8');
+    fs.renameSync(tmp, filePath);
+  } else {
+    fs.writeFileSync(filePath, entry, 'utf-8');
+  }
 
   return { ok: true, type, title, file: FILES[type] };
+}
+
+function findHeaderEnd(content) {
+  // Header = lines before the first entry (<!-- frag: or ## # for fragments, ## for others)
+  // Typically: "# Title\n\nDescription paragraph.\n\n"
+  const lines = content.split('\n');
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    // First entry marker: frag comment or second-level heading that's an actual entry (not the file title)
+    if (line.startsWith('<!-- frag:') || (i > 0 && line.startsWith('## '))) {
+      return lines.slice(0, i).join('\n').length + 1; // +1 for the \n
+    }
+  }
+  // No entries found, append after all content
+  return content.length;
 }
 
 function readMeta() {
