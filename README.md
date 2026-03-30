@@ -7,7 +7,7 @@ Your insights emerge while working. They scatter across conversations and get lo
 ## Install
 
 ```
-/plugin → Marketplaces → Add → CoralLips
+/plugin → Marketplaces → Add → github:CoralLips/thinking-tree
 /plugin → Discover → thinking-tree → Install
 /think  → Enable recording
 ```
@@ -43,6 +43,8 @@ Fragments accumulate → organize into thought files → questions emerge → an
 |---------|-------------|
 | `/think` | Toggle recording on/off |
 | `/reduce` | Interactive cleanup — deduplicate, classify, remove stale fragments |
+| `/catch` | Manually capture missed insights — accepts a hint about what to look for |
+| `/pref` | Adjust recording preferences via natural language |
 
 ## Web Viewer
 

@@ -99,6 +99,7 @@ function saveItem(body) {
   const newSection = `## ${title}\n\n${content}`;
 
   if (type === 'thought') {
+    if (content == null) return { ok: false, error: 'missing content' };
     // Prevent path traversal — only allow basename within TREE
     const safe = path.basename(body.filename || '');
     if (!safe || safe.startsWith('.')) return { ok: false, error: 'invalid filename' };
