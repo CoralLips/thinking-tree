@@ -409,6 +409,8 @@ function renderFileList() {
 // --- Thoughts: document view ---
 function renderThoughtDoc() {
   const content = document.getElementById('content');
+  const prevScroll = content.querySelector('.panel-content-scroll');
+  const scrollTop = prevScroll ? prevScroll.scrollTop : 0;
   if (selectedFile < 0 || selectedFile >= data.thoughts.length) {
     content.innerHTML = '<div class="panel-content-scroll"><div class="content-inner"><div class="empty">Select a file from the list</div></div></div>';
     return;
@@ -430,6 +432,8 @@ function renderThoughtDoc() {
       renderThoughtDoc();
     });
   }
+  const newScroll = content.querySelector('.panel-content-scroll');
+  if (newScroll) newScroll.scrollTop = scrollTop;
 }
 
 async function saveThought() {
@@ -461,6 +465,8 @@ function getPoolItems() {
 function renderPool() {
   const items = getPoolItems();
   const content = document.getElementById('content');
+  const prevScroll = content.querySelector('.panel-content-scroll');
+  const scrollTop = prevScroll ? prevScroll.scrollTop : 0;
   if (!items.length) {
     content.innerHTML = '<div class="panel-content-scroll"><div class="content-inner"><div class="empty">No items yet</div></div></div>';
     return;
@@ -541,6 +547,10 @@ function renderPool() {
       if (e.key === 's' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); savePoolBlock(); }
     });
   }
+
+  // Restore scroll position after DOM rebuild
+  const newScroll = content.querySelector('.panel-content-scroll');
+  if (newScroll) newScroll.scrollTop = scrollTop;
 }
 
 function autoResize(el) {
