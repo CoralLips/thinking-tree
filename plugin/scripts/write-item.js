@@ -80,17 +80,36 @@ function write(data) {
 }
 
 function findHeaderEnd(content) {
-  // Header = lines before the first entry (<!-- frag: or ## # for fragments, ## for others)
-  // Typically: "# Title\n\nDescription paragraph.\n\n"
+  // Header = the file title (# ...) + optional description lines, typically 3-6 lines.
+  // We scan only the first 10 lines to avoid treating corrupted content as header.
   const lines = content.split('\n');
-  for (let i = 0; i < lines.length; i++) {
+  const limit = Math.min(lines.length, 10);
+  for (let i = 0; i < limit; i++) {
     const line = lines[i];
-    // First entry marker: frag comment or second-level heading that's an actual entry (not the file title)
-    if (line.startsWith('<!-- frag:') || (i > 0 && line.startsWith('## '))) {
-      return lines.slice(0, i).join('\n').length + 1; // +1 for the \n
+    if (line.startsWith('<!-- frag:') || line.startsWith('<!-- question:') || line.startsWith('<!-- todo:')) {
+      return lines.slice(0, i).join('\n').length + (i > 0 ? 1 : 0);
+    }
+    if (i > 0 && line.startsWith('## ')) {
+      return lines.slice(0, i).join('\n').length + (i > 0 ? 1 : 0);
     }
   }
-  // No entries found, append after all content
+  // No entry found in first 10 lines — header ends after the last blank line in the initial block
+  for (let i = 0; i < limit; i++) {
+    if (lines[i].startsWith('<!-- frag:') || lines[i].startsWith('## ')) {
+      return lines.slice(0, i).join('\n').length + (i > 0 ? 1 : 0);
+    }
+  }
+  // Fallback: insert after first blank line sequence
+  let inHeader = true;
+  for (let i = 0; i < lines.length; i++) {
+    if (inHeader && lines[i].trim() === '' && i > 0) {
+      // Find end of blank lines
+      let j = i;
+      while (j < lines.length && lines[j].trim() === '') j++;
+      if (j < lines.length) return lines.slice(0, j).join('\n').length + 1;
+    }
+    if (lines[i].startsWith('#')) inHeader = true;
+  }
   return content.length;
 }
 
