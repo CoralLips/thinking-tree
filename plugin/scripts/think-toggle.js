@@ -52,5 +52,18 @@ if (isOn) {
     // Copy latest from plugin
     fs.writeFileSync(dest, fs.readFileSync(src, 'utf-8'));
   }
+  // Start viewer if not already running
+  const VIEWER_PORT = 3456;
+  const VIEWER_SCRIPT = path.join(PLUGIN_ROOT, 'scripts', 'thinking-tree-server.js');
+  try {
+    const { spawn } = require('child_process');
+    const child = spawn(process.execPath, [VIEWER_SCRIPT, String(VIEWER_PORT)], {
+      detached: true,
+      stdio: 'ignore',
+      env: { ...process.env, USERPROFILE: HOME, HOME: HOME }
+    });
+    child.unref();
+  } catch { }
+
   console.log('thinking-tree recording ON. Rules synced to latest version.');
 }
