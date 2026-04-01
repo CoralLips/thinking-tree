@@ -16,6 +16,15 @@ function readFile(name) {
   try { return fs.readFileSync(path.join(TREE, name), 'utf-8'); } catch { return ''; }
 }
 
+function stripComments(text) {
+  return text.replace(/<!--\s*(?:frag|question|todo):\d+[^>]*-->\s*/g, '').trim();
+}
+
+function bodyAfterTitle(section, titleMatch) {
+  const idx = section.indexOf(titleMatch);
+  return stripComments(section.slice(idx + titleMatch.length)).trim();
+}
+
 function parseFragments() {
   const content = readFile('fragments.md');
   const sections = content.split(/\r?\n---\r?\n/);
@@ -24,7 +33,7 @@ function parseFragments() {
     const match = section.match(/^## (.+)$/m);
     if (match) {
       const title = match[1];
-      const body = section.replace(/^## .+$/m, '').trim();
+      const body = bodyAfterTitle(section, match[0]);
       const idMatch = section.match(/<!-- frag:(\d+)/);
       const id = idMatch ? parseInt(idMatch[1]) : null;
       items.push({ title, body, type: 'fragment', id });
@@ -42,7 +51,7 @@ function parseQuestions() {
     if (match && match[1].trim() !== '') {
       const title = match[1];
       const done = title.startsWith('✓');
-      const body = section.replace(/^## .+$/m, '').trim();
+      const body = bodyAfterTitle(section, match[0]);
       items.push({ title, body, done, type: 'question' });
     }
   }
@@ -58,7 +67,7 @@ function parseTodos() {
     if (match && !match[1].includes('创建于') && !match[1].includes('更新于')) {
       const title = match[1];
       const done = title.startsWith('✅');
-      const body = section.replace(/^## .+$/m, '').trim();
+      const body = bodyAfterTitle(section, match[0]);
       items.push({ title, body, done, type: 'todo' });
     }
   }
