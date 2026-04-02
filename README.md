@@ -1,16 +1,25 @@
 # thinking-tree
 
-Persistent thinking system for Claude Code — captures, organizes, and evolves scattered thoughts across sessions.
+Code has git. Thinking has nothing.
 
-Your insights emerge while working. They scatter across conversations and get lost when the session ends. thinking-tree catches the ones worth keeping.
+AI makes it worse — you produce 5x more insights per session, but still save zero. The best ideas vanish when the conversation ends. thinking-tree is a Claude Code plugin that catches them before they do.
 
 ## Install
 
+In your Claude Code terminal:
+
+```bash
+# 1. Add the marketplace (one-time)
+/plugin marketplace add github:CoralLips/thinking-tree
+
+# 2. Install the plugin
+/plugin install thinking-tree
+
+# 3. Enable recording
+/think
 ```
-/plugin → Marketplaces → Add → github:CoralLips/thinking-tree
-/plugin → Discover → thinking-tree → Install
-/think  → Enable recording
-```
+
+That's it. Work normally — thinking-tree evaluates each conversation turn and saves insights worth keeping.
 
 ## How it works
 
@@ -20,9 +29,8 @@ Your insights emerge while working. They scatter across conversations and get lo
 4. **Next session** — recent fragments and open questions are injected as context
 5. **Review anytime** — web viewer at `http://localhost:3456`
 
-Every turn ends with a status indicator:
-- `📝 Title` — fragment recorded
-- `❓ Title` — question recorded
+Every turn ends with a status line:
+- `📝 Title` — fragment or question recorded
 - `🌳` — checked, nothing to record
 
 ## Spaces
@@ -41,29 +49,31 @@ Fragments accumulate → organize into thought files → questions emerge → an
 
 | Command | What it does |
 |---------|-------------|
-| `/think` | Toggle recording on/off |
+| `/think` | Toggle recording on/off (takes effect immediately) |
 | `/reduce` | Interactive cleanup — deduplicate, classify, remove stale fragments |
 | `/catch` | Manually capture missed insights — accepts a hint about what to look for |
 | `/pref` | Adjust recording preferences via natural language |
 
 ## Web Viewer
 
-Auto-starts on session start at [localhost:3456](http://localhost:3456).
+Auto-starts at [localhost:3456](http://localhost:3456) when you begin a session.
 
 - Browse thoughts, fragments, questions, todos
 - Click to edit, Ctrl+S to save
-- Real-time sync (SSE) — edits in Claude or the viewer appear instantly
-- Dark/light theme toggle
-- Export all data as markdown
+- Real-time sync — edits in Claude or the viewer appear instantly
+- Dark/light theme, export as markdown
 
 ## Update
 
-```
-/plugin → Marketplaces → Update marketplace
-/plugin → Installed → thinking-tree → Update
-```
+Plugin updates require two steps (this is a Claude Code limitation):
 
-Both steps required — marketplace update pulls latest from GitHub, plugin update installs it.
+```bash
+# 1. Refresh the marketplace catalog
+/plugin marketplace update CoralLips
+
+# 2. Update the plugin
+/plugin update thinking-tree
+```
 
 ## Data
 
