@@ -1,3 +1,5 @@
+[English](README.md) | [中文](README.zh-CN.md)
+
 # thinking-tree
 
 Code has git. Thinking has nothing.
