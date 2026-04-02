@@ -1,6 +1,6 @@
 {
   "name": "thinking-tree",
-  "version": "0.11.0",
+  "version": "0.12.0",
   "private": true,
   "description": "Runtime for thinking-tree Claude Code plugin",
   "engines": {
