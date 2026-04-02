@@ -1,5 +1,5 @@
 {
-  "description": "thinking-tree hooks: setup + context injection + recorder",
+  "description": "thinking-tree hooks: setup + context injection + per-turn status + recorder",
   "hooks": {
     "Setup": [
       {
@@ -21,6 +21,17 @@
             "type": "command",
             "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/inject-context.js\"",
             "timeout": 5
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/think-status.js\"",
+            "timeout": 3
           }
         ]
       }
