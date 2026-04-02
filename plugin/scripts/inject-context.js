@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 // thinking-tree SessionStart hook
-// 1. Sync rules from plugin to ~/.claude/rules/
-// 2. Inject recent fragments, questions, todos as context
+// 1. Clean stale plugin cache versions
+// 2. Sync rules from plugin to ~/.claude/rules/
+// 3. Inject recent fragments, questions, todos as context
 
 const fs = require('fs');
 const path = require('path');
@@ -10,6 +11,31 @@ const HOME = process.env.USERPROFILE || process.env.HOME;
 const TREE = path.join(HOME, '.thinking-tree');
 const RULES_DIR = path.join(HOME, '.claude', 'rules');
 const PLUGIN_ROOT = process.env.CLAUDE_PLUGIN_ROOT || path.resolve(__dirname, '..');
+
+// --- Clean stale cache versions ---
+// Plugin system never cleans old version directories; we do it ourselves
+function cleanStaleCache() {
+  try {
+    const currentVersion = JSON.parse(
+      fs.readFileSync(path.join(PLUGIN_ROOT, '.claude-plugin', 'plugin.json'), 'utf-8')
+    ).version;
+    if (!currentVersion) return;
+
+    const cacheParent = path.dirname(PLUGIN_ROOT); // .../cache/CoralLips/thinking-tree/
+    const entries = fs.readdirSync(cacheParent);
+    for (const entry of entries) {
+      if (entry === currentVersion) continue;
+      const full = path.join(cacheParent, entry);
+      try {
+        if (fs.statSync(full).isDirectory()) {
+          fs.rmSync(full, { recursive: true, force: true });
+        }
+      } catch {}
+    }
+  } catch {}
+}
+
+try { cleanStaleCache(); } catch {}
 
 // --- Rules sync ---
 // Copy plugin rules to ~/.claude/rules/ (always, state controlled by .think-state)
@@ -65,6 +91,11 @@ try {
       'utf-8'
     );
     console.log('🌳 [thinking-tree] initialized ~/.thinking-tree/ — use /think to enable recording');
+  }
+  // Ensure .think-state exists (default off for new installs)
+  const stateFile = path.join(TREE, '.think-state');
+  if (!fs.existsSync(stateFile)) {
+    fs.writeFileSync(stateFile, 'off', 'utf-8');
   }
 } catch (e) {
   console.error(`🌳 [thinking-tree] init failed: ${e.message}`);
