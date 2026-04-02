@@ -4,6 +4,14 @@ Code has git. Thinking has nothing.
 
 AI makes it worse — you produce 5x more insights per session, but still save zero. The best ideas vanish when the conversation ends. thinking-tree is a Claude Code plugin that catches them before they do.
 
+**Fragments accumulate as you work:**
+
+![Pool view — fragments captured across sessions](assets/viewer-pool.png)
+
+**Crystallize into structured thoughts over time:**
+
+![Thoughts view — organized thinking with diagrams and structure](assets/viewer-thoughts.png)
+
 ## Install
 
 In your Claude Code terminal:
