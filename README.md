@@ -8,11 +8,11 @@ AI makes it worse — you produce 5x more insights per session, but still save z
 
 **Fragments accumulate as you work:**
 
-<img src="assets/viewer-pool.png" alt="Pool view — fragments captured across sessions" style="border: 1px solid #d1d5db; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.12);" />
+![Pool view — fragments captured across sessions](assets/viewer-pool.png)
 
 **Crystallize into structured thoughts over time:**
 
-<img src="assets/viewer-thoughts.png" alt="Thoughts view — organized thinking with diagrams and structure" style="border: 1px solid #d1d5db; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.12);" />
+![Thoughts view — organized thinking with diagrams and structure](assets/viewer-thoughts.png)
 
 ## Install
 
