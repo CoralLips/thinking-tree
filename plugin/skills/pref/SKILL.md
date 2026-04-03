@@ -32,9 +32,38 @@ description: Adjust thinking-tree recording preferences via natural language. Up
 - **删除偏好** — 用户说"取消"、"恢复默认"等
 - **查看偏好** — 用户说"显示"、"当前"、"有哪些"
 
-### 3. 更新文件
+### 3. 展示方案并确认
 
-修改 `~/.thinking-tree/preferences.md`，保持格式：
+**不要直接修改文件**，先展示你打算怎么改，让用户确认：
+
+```
+我理解你想：不记录纯 debug 讨论
+
+打算这样调整 preferences.md：
+  + 新增「记录范围」：不记录纯 debug 过程中的排查细节
+  
+确认？(y/n)
+```
+
+如果涉及修改或删除已有偏好，要明确展示前后对比：
+
+```
+打算这样调整：
+  ~ 修改「记录范围」：
+    原：只关注产品认知
+    改：只关注产品认知和架构决策
+
+确认？(y/n)
+```
+
+用 AskUserQuestion 工具获取确认，提供选项按钮（用户点击即可，不用打字）：
+- 选项 1：「确认，就这样改」
+- 选项 2：「不改了」  
+- 选项 3：「调整一下」（用户补充说明后重新展示方案）
+
+### 4. 用户确认后写入
+
+确认后修改 `~/.thinking-tree/preferences.md`，保持格式：
 
 ```markdown
 # 记录偏好
@@ -53,13 +82,11 @@ description: Adjust thinking-tree recording preferences via natural language. Up
 
 只写用户明确表达的偏好，不要自作主张填充默认值。空分区不写。
 
-### 4. 确认反馈
+### 5. 反馈
 
 ```
 偏好已更新：
   + 新增：不记录纯 debug 讨论
-  ~ 修改：标题风格从陈述句改为问句
-  - 移除：XXX
 
 当前偏好共 N 条。
 ```
