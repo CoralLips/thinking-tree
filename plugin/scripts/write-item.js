@@ -11,8 +11,6 @@ const path = require('path');
 
 const HOME = process.env.USERPROFILE || process.env.HOME;
 const TREE = path.join(HOME, '.thinking-tree');
-const META_PATH = path.join(TREE, '.meta.json');
-
 const FILES = {
   fragment: 'fragments.md',
   question: 'questions.md',
@@ -51,11 +49,18 @@ function write(data) {
   // Build entry based on type
   let entry;
   if (type === 'fragment') {
-    const meta = readMeta();
-    const id = meta.fragments.nextId;
+    // Derive next ID from file content — no external state needed
+    let maxId = 0;
+    try {
+      const existing = fs.readFileSync(filePath, 'utf-8');
+      const ids = existing.match(/<!-- frag:(\d+)/g) || [];
+      for (const m of ids) {
+        const n = parseInt(m.match(/\d+/)[0]);
+        if (n > maxId) maxId = n;
+      }
+    } catch {}
+    const id = maxId + 1;
     entry = `\n<!-- frag:${id} date:${today} -->\n## ${title}\n\n${body}\n---\n`;
-    meta.fragments.nextId = id + 1;
-    writeMeta(meta);
   } else {
     // question and todo: no ID tracking, just append
     entry = `\n## ${title}\n\n${body}\n---\n`;
@@ -112,20 +117,3 @@ function findHeaderEnd(content) {
   return content.length;
 }
 
-function readMeta() {
-  try {
-    return JSON.parse(fs.readFileSync(META_PATH, 'utf-8'));
-  } catch {
-    return {
-      fragments: { count: 0, lastReduceCount: 0, lastReduceDate: null, nextId: 1 },
-      sessionLog: { roundCount: 0, lastRecorderRound: 0 },
-    };
-  }
-}
-
-function writeMeta(meta) {
-  // Write to temp file then rename for atomicity
-  const tmp = META_PATH + '.tmp';
-  fs.writeFileSync(tmp, JSON.stringify(meta, null, 2) + '\n', 'utf-8');
-  fs.renameSync(tmp, META_PATH);
-}
