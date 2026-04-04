@@ -5,7 +5,7 @@ description: Organize the thinking-tree fragment pool — deduplicate, classify,
 
 # 碎片整理
 
-对 thinking-tree 碎片池进行筛选和提炼：偏好过滤、去重、归类、过时清理、思路提炼。
+对 thinking-tree 碎片池进行筛选：偏好过滤、去重、归类、过时清理。
 使用 AskUserQuestion 提供选项式交互，用户无需打字即可审核。
 
 ---
@@ -30,7 +30,6 @@ description: Organize the thinking-tree fragment pool — deduplicate, classify,
 | **重复组** | 核心论点与另一条碎片相同（仅措辞/例子不同） | 合并为一条 |
 | **归类组** | 主题与某个已有思路文件的主线高度匹配 | 整合进该思路文件 |
 | **过时组** | 已被后续思考覆盖、推翻、或已无参考价值 | 删除 |
-| **可结晶组** | 多条碎片围绕同一主线，可提炼为新思路文件 | 合成新思路 |
 | **保留组** | 独立有效，不重复不过时 | 保留原位 |
 
 ### 3. 输出总览
@@ -38,7 +37,7 @@ description: Organize the thinking-tree fragment pool — deduplicate, classify,
 先输出一行统计，让用户了解整体情况：
 
 ```
-整理分析完成：73 条碎片 → 偏好外 6 条，重复 12 条，可归类 8 条，疑似过时 5 条，可结晶 1 组，保留 42 条
+整理分析完成：73 条碎片 → 偏好外 6 条，重复 12 条，可归类 8 条，疑似过时 5 条，保留 42 条
 ```
 
 ### 4. 逐组确认（AskUserQuestion 交互）
@@ -89,26 +88,7 @@ description: Organize the thinking-tree fragment pool — deduplicate, classify,
 - options: 每条过时碎片作为一个选项，description 说明过时原因
 - 用户可选择部分删除，或全选，或不选
 
-#### 4e. 可结晶组 — 提炼为新思路文件
-
-当发现 3+ 条碎片围绕同一主题且能串成主线时，提议合成新思路文件。
-
-使用 AskUserQuestion：
-- question: "以下碎片可以提炼为新思路文件「建议的文件名」，要合成吗？"
-- header: "结晶"
-- options:
-  - label: "合成思路文件 (Recommended)", description: "将这些碎片提炼为一篇有主线的思路文档，从碎片池移除"
-  - label: "保留为碎片", description: "不合成，继续作为独立碎片"
-- preview: 列出涉及的碎片标题 + 提炼后的主线概述
-- multiSelect: false
-
-合成时：
-- 在 `~/.thinking-tree/` 创建新 .md 文件
-- 内容不是碎片的简单拼接，而是**提炼为有主线的结构化文档**
-- 从碎片池移除已合成的碎片
-- 保持思路文件的质量标准：主线清晰，每节有位置，能一句话概括
-
-#### 4f. 保留组 — 不需要确认
+#### 4e. 保留组 — 不需要确认
 
 保留组直接跳过，不打扰用户。
 
@@ -119,15 +99,13 @@ description: Organize the thinking-tree fragment pool — deduplicate, classify,
 - 合并：保留精炼版，删除冗余版
 - 归类：将碎片内容追加到对应思路文件末尾（加 `---` 分隔），从碎片池删除
 - 删除：直接从碎片池移除
-- 结晶：创建新思路文件，从碎片池移除已合成碎片
 - 保留：不动
 
 ### 6. 输出统计
 
 ```
-整理完成：偏好过滤 X 条，合并 Y 条，归类 Z 条，删除 W 条，结晶 N 篇，保留 M 条
+整理完成：偏好过滤 X 条，合并 Y 条，归类 Z 条，删除 W 条，保留 M 条
 碎片池：73 → 50 条
-新思路文件：xxx.md
 ```
 
 ---
@@ -135,9 +113,8 @@ description: Organize the thinking-tree fragment pool — deduplicate, classify,
 ## 注意事项
 
 - 所有文件路径使用绝对路径
-- 不要创造新内容（除结晶外），只做整理和搬运
+- 不要创造新内容，只做整理和搬运
 - 碎片合并时保留最完整的表述
 - AskUserQuestion 每次最多 4 个选项、4 个问题，碎片多时分批
-- 如果碎片数量很多（50+），优先处理偏好外和重复（确定性高），归类和结晶可适当放宽
+- 如果碎片数量很多（50+），优先处理偏好外和重复（确定性高），归类可适当放宽
 - 归类到思路文件时保持该文件的既有风格和结构
-- 结晶的思路文件必须有主线，不是碎片的简单拼接
