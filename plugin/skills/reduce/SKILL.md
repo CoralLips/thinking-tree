@@ -1,11 +1,11 @@
 ---
 name: reduce
-description: Organize the thinking-tree fragment pool — deduplicate, classify, and clean up. Uses AskUserQuestion for option-based interaction so user can review without typing.
+description: Organize the thinking-tree fragment pool — deduplicate, classify, clean up, and crystallize. Uses AskUserQuestion for option-based interaction so user can review without typing.
 ---
 
 # 碎片整理
 
-对 thinking-tree 碎片池进行三层筛选：去重、归类、检验。
+对 thinking-tree 碎片池进行筛选和提炼：偏好过滤、去重、归类、过时清理、思路提炼。
 使用 AskUserQuestion 提供选项式交互，用户无需打字即可审核。
 
 ---
@@ -17,17 +17,20 @@ description: Organize the thinking-tree fragment pool — deduplicate, classify,
 读取以下文件（`~` = 用户 home 目录）：
 - `~/.thinking-tree/fragments.md` — 碎片池（主要处理对象）
 - `~/.thinking-tree/questions.md` — 已有问题（判断是否有碎片应转为问题）
+- `~/.thinking-tree/preferences.md` — 用户偏好（判断碎片是否符合记录范围）
 - 列出 `~/.thinking-tree/` 目录下所有 *.md 思路文件（判断碎片是否可归入已有思路）
 
 ### 2. 分析碎片
 
-对每个碎片（以 `## ` 开头、由 `---` 分隔的段落）逐条评估，分为四组：
+对每个碎片（以 `## ` 开头、由 `---` 分隔的段落）逐条评估，分为六组：
 
 | 组 | 判断标准 | 动作 |
 |----|---------|------|
+| **偏好外组** | 不符合 preferences.md 中的记录范围（如工程细节） | 删除 |
 | **重复组** | 核心论点与另一条碎片相同（仅措辞/例子不同） | 合并为一条 |
 | **归类组** | 主题与某个已有思路文件的主线高度匹配 | 整合进该思路文件 |
 | **过时组** | 已被后续思考覆盖、推翻、或已无参考价值 | 删除 |
+| **可结晶组** | 多条碎片围绕同一主线，可提炼为新思路文件 | 合成新思路 |
 | **保留组** | 独立有效，不重复不过时 | 保留原位 |
 
 ### 3. 输出总览
@@ -35,14 +38,23 @@ description: Organize the thinking-tree fragment pool — deduplicate, classify,
 先输出一行统计，让用户了解整体情况：
 
 ```
-整理分析完成：73 条碎片 → 重复 12 条，可归类 8 条，疑似过时 5 条，保留 48 条
+整理分析完成：73 条碎片 → 偏好外 6 条，重复 12 条，可归类 8 条，疑似过时 5 条，可结晶 1 组，保留 42 条
 ```
 
 ### 4. 逐组确认（AskUserQuestion 交互）
 
 **重要：使用 AskUserQuestion 工具让用户通过选项确认，不要让用户打字。**
 
-#### 4a. 重复组 — 每组重复碎片一起确认
+#### 4a. 偏好外组 — 批量确认删除
+
+读取 preferences.md 的记录范围，标记不符合的碎片。使用 AskUserQuestion：
+- question: "以下碎片不符合当前记录偏好（如：工程细节），选择要删除的"
+- header: "偏好过滤"
+- multiSelect: true
+- options: 每条碎片作为一个选项，description 说明为何不符合偏好
+- 用户可选择部分删除，或全选，或不选
+
+#### 4b. 重复组 — 每组重复碎片一起确认
 
 对每组重复碎片（2-3 条一组），使用 AskUserQuestion：
 - question: "这 N 条碎片表达了相似观点，如何处理？"
@@ -53,7 +65,7 @@ description: Organize the thinking-tree fragment pool — deduplicate, classify,
 - preview: 展示这几条碎片的标题和关键内容对比
 - multiSelect: false
 
-#### 4b. 归类组 — 逐条确认归入哪个思路文件
+#### 4c. 归类组 — 逐条确认归入哪个思路文件
 
 对每条可归类碎片，使用 AskUserQuestion：
 - question: "「碎片标题」可以归入已有思路文件，确认？"
@@ -68,7 +80,7 @@ description: Organize the thinking-tree fragment pool — deduplicate, classify,
 - multiSelect: true
 - options: 每条碎片作为一个选项（最多 4 条一批）
 
-#### 4c. 过时组 — 批量确认删除
+#### 4d. 过时组 — 批量确认删除
 
 使用 AskUserQuestion：
 - question: "以下碎片可能已过时，选择要删除的"
@@ -77,23 +89,45 @@ description: Organize the thinking-tree fragment pool — deduplicate, classify,
 - options: 每条过时碎片作为一个选项，description 说明过时原因
 - 用户可选择部分删除，或全选，或不选
 
-#### 4d. 保留组 — 不需要确认
+#### 4e. 可结晶组 — 提炼为新思路文件
+
+当发现 3+ 条碎片围绕同一主题且能串成主线时，提议合成新思路文件。
+
+使用 AskUserQuestion：
+- question: "以下碎片可以提炼为新思路文件「建议的文件名」，要合成吗？"
+- header: "结晶"
+- options:
+  - label: "合成思路文件 (Recommended)", description: "将这些碎片提炼为一篇有主线的思路文档，从碎片池移除"
+  - label: "保留为碎片", description: "不合成，继续作为独立碎片"
+- preview: 列出涉及的碎片标题 + 提炼后的主线概述
+- multiSelect: false
+
+合成时：
+- 在 `~/.thinking-tree/` 创建新 .md 文件
+- 内容不是碎片的简单拼接，而是**提炼为有主线的结构化文档**
+- 从碎片池移除已合成的碎片
+- 保持思路文件的质量标准：主线清晰，每节有位置，能一句话概括
+
+#### 4f. 保留组 — 不需要确认
 
 保留组直接跳过，不打扰用户。
 
 ### 5. 执行改动
 
 按用户在每一步选择的结果修改文件：
+- 偏好外删除：直接从碎片池移除
 - 合并：保留精炼版，删除冗余版
 - 归类：将碎片内容追加到对应思路文件末尾（加 `---` 分隔），从碎片池删除
 - 删除：直接从碎片池移除
+- 结晶：创建新思路文件，从碎片池移除已合成碎片
 - 保留：不动
 
 ### 6. 输出统计
 
 ```
-整理完成：合并 X 条，归类 Y 条，删除 Z 条，保留 W 条
-碎片池：73 → 58 条
+整理完成：偏好过滤 X 条，合并 Y 条，归类 Z 条，删除 W 条，结晶 N 篇，保留 M 条
+碎片池：73 → 50 条
+新思路文件：xxx.md
 ```
 
 ---
@@ -101,8 +135,9 @@ description: Organize the thinking-tree fragment pool — deduplicate, classify,
 ## 注意事项
 
 - 所有文件路径使用绝对路径
-- 不要创造新内容，只做整理和搬运
+- 不要创造新内容（除结晶外），只做整理和搬运
 - 碎片合并时保留最完整的表述
 - AskUserQuestion 每次最多 4 个选项、4 个问题，碎片多时分批
-- 如果碎片数量很多（50+），优先处理重复和过时（确定性高），归类组可适当放宽
+- 如果碎片数量很多（50+），优先处理偏好外和重复（确定性高），归类和结晶可适当放宽
 - 归类到思路文件时保持该文件的既有风格和结构
+- 结晶的思路文件必须有主线，不是碎片的简单拼接
