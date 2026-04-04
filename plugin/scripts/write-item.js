@@ -55,7 +55,6 @@ function write(data) {
     const id = meta.fragments.nextId;
     entry = `\n<!-- frag:${id} date:${today} -->\n## ${title}\n\n${body}\n---\n`;
     meta.fragments.nextId = id + 1;
-    meta.fragments.count = (meta.fragments.count || 0) + 1;
     writeMeta(meta);
   } else {
     // question and todo: no ID tracking, just append

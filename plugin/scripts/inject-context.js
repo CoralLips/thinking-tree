@@ -145,35 +145,12 @@ function extractPendingTodos(content) {
   return todos;
 }
 
-// --- Meta: read and update fragment count ---
-const META_PATH = path.join(TREE, '.meta.json');
-
-function readMeta() {
-  try {
-    return JSON.parse(fs.readFileSync(META_PATH, 'utf-8'));
-  } catch {
-    return { fragments: { count: 0, lastReduceCount: 0, lastReduceDate: null, nextId: 1 }, sessionLog: { roundCount: 0, lastRouterRound: 0 } };
-  }
-}
-
-function writeMeta(meta) {
-  const tmp = META_PATH + '.tmp';
-  fs.writeFileSync(tmp, JSON.stringify(meta, null, 2) + '\n', 'utf-8');
-  fs.renameSync(tmp, META_PATH);
-}
-
 // --- Main ---
 
 const fragmentContent = readFile('fragments.md');
 const fragments = extractRecentFragments(fragmentContent);
 const questions = extractOpenQuestions(readFile('questions.md'));
 const todos = extractPendingTodos(readFile('todos.md'));
-
-// Update meta with current fragment count (use HTML annotations for reliable counting)
-const currentFragmentCount = (fragmentContent.match(/<!-- frag:\d+/g) || []).length;
-const meta = readMeta();
-meta.fragments.count = currentFragmentCount;
-writeMeta(meta);
 
 const hasContent = fragments.length || questions.length || todos.length;
 if (!hasContent) process.exit(0);
