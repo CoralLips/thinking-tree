@@ -61,6 +61,7 @@ Fragments accumulate → organize into thought files → questions emerge → an
 |---------|-------------|
 | `/think` | Toggle recording on/off (takes effect immediately) |
 | `/reduce` | Interactive cleanup — deduplicate, classify, remove stale fragments |
+| `/distill` | Synthesize related fragments into a structured thought file |
 | `/catch` | Manually capture missed insights — accepts a hint about what to look for |
 | `/pref` | Adjust recording preferences via natural language |
 
