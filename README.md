@@ -86,6 +86,20 @@ Plugin updates require two steps (this is a Claude Code limitation):
 /plugin update thinking-tree
 ```
 
+## Uninstall
+
+Turn off recording first, then remove the plugin:
+
+```bash
+# 1. Turn off recording (cleans up rule files)
+/think
+
+# 2. Remove the plugin
+/plugin uninstall thinking-tree
+```
+
+Your data in `~/.thinking-tree/` is preserved. Delete it manually if you no longer need it.
+
 ## Data
 
 All data lives in `~/.thinking-tree/`. The plugin never touches your project files. Uninstalling the plugin leaves your data intact.
