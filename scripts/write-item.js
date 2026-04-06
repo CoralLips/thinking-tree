@@ -97,22 +97,13 @@ function findHeaderEnd(content) {
       return lines.slice(0, i).join('\n').length + (i > 0 ? 1 : 0);
     }
   }
-  // No entry found in first 10 lines — header ends after the last blank line in the initial block
-  for (let i = 0; i < limit; i++) {
-    if (lines[i].startsWith('<!-- frag:') || lines[i].startsWith('## ')) {
-      return lines.slice(0, i).join('\n').length + (i > 0 ? 1 : 0);
-    }
-  }
   // Fallback: insert after first blank line sequence
-  let inHeader = true;
-  for (let i = 0; i < lines.length; i++) {
-    if (inHeader && lines[i].trim() === '' && i > 0) {
-      // Find end of blank lines
+  for (let i = 1; i < lines.length; i++) {
+    if (lines[i].trim() === '') {
       let j = i;
       while (j < lines.length && lines[j].trim() === '') j++;
       if (j < lines.length) return lines.slice(0, j).join('\n').length + 1;
     }
-    if (lines[i].startsWith('#')) inHeader = true;
   }
   return content.length;
 }

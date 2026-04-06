@@ -19,7 +19,7 @@ description: Clean the thinking-tree fragment pool — filter by preferences, de
 
 读取以下文件（`~` = 用户 home 目录）：
 - `~/.thinking-tree/fragments.md` — 碎片池（主要处理对象）
-- `~/.thinking-tree/preferences.md` — 用户偏好（判断碎片是否符合记录范围）
+- `~/.thinking-tree/.preferences.md` — 用户偏好（判断碎片是否符合记录范围）
 
 ### 2. 分析碎片
 
@@ -27,7 +27,7 @@ description: Clean the thinking-tree fragment pool — filter by preferences, de
 
 | 组 | 判断标准 | 动作 |
 |----|---------|------|
-| **偏好外组** | 不符合 preferences.md 中的记录范围（如工程细节） | 删除 |
+| **偏好外组** | 不符合 .preferences.md 中的记录范围（如工程细节） | 删除 |
 | **重复组** | 核心论点与另一条碎片相同（仅措辞/例子不同） | 合并为一条 |
 | **过时组** | 已被后续思考覆盖、推翻、或已无参考价值 | 删除 |
 | **保留组** | 独立有效，不重复不过时 | 保留原位 |
@@ -47,7 +47,7 @@ description: Clean the thinking-tree fragment pool — filter by preferences, de
 
 #### 4a. 偏好外组 — 单选批量确认
 
-读取 preferences.md 的记录范围，标记不符合的碎片。使用 AskUserQuestion：
+读取 .preferences.md 的记录范围，标记不符合的碎片。使用 AskUserQuestion：
 - question: "发现 N 条碎片不符合当前记录偏好（如：工程细节），如何处理？"
 - header: "偏好过滤"
 - multiSelect: false

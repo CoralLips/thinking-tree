@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // thinking-tree /think toggle — writes state file for per-turn hook
-// Rules stay permanently in ~/.claude/rules/, state controls behavior
+// ON: sync rules to ~/.claude/rules/ + start viewer; OFF: remove rules (zero token cost)
 
 const fs = require('fs');
 const path = require('path');
@@ -11,7 +11,6 @@ const RULES_DIR = path.join(HOME, '.claude', 'rules');
 const PLUGIN_ROOT = process.env.CLAUDE_PLUGIN_ROOT || path.resolve(__dirname, '..');
 const PLUGIN_RULES = path.join(PLUGIN_ROOT, 'rules');
 const STATE_FILE = path.join(TREE, '.think-state');
-const SESSION_LOG = path.join(TREE, '.session-log.md');
 
 fs.mkdirSync(TREE, { recursive: true });
 fs.mkdirSync(RULES_DIR, { recursive: true });
@@ -25,7 +24,15 @@ try {
 if (isOn) {
   // --- Turn OFF ---
   fs.writeFileSync(STATE_FILE, 'off', 'utf-8');
-  try { fs.unlinkSync(SESSION_LOG); } catch {}
+
+  // Remove rules from ~/.claude/rules/ (zero token cost when OFF)
+  try {
+    for (const file of fs.readdirSync(PLUGIN_RULES)) {
+      if (!file.endsWith('.md')) continue;
+      try { fs.unlinkSync(path.join(RULES_DIR, file)); } catch {}
+    }
+  } catch {}
+
   console.log('thinking-tree recording OFF.');
 } else {
   // --- Turn ON ---

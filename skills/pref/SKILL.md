@@ -1,11 +1,11 @@
 ---
 name: pref
-description: Adjust thinking-tree recording preferences via natural language. Updates ~/.thinking-tree/preferences.md which guides how the clarifier captures and routes insights.
+description: Adjust thinking-tree recording preferences via natural language. Updates ~/.thinking-tree/.preferences.md which guides how the clarifier captures and routes insights.
 ---
 
 # 调整记录偏好
 
-用户通过自然语言描述偏好，系统更新 `~/.thinking-tree/preferences.md`。
+用户通过自然语言描述偏好，系统更新 `~/.thinking-tree/.preferences.md`。
 
 ## 用法
 
@@ -22,7 +22,7 @@ description: Adjust thinking-tree recording preferences via natural language. Up
 
 ### 1. 读取当前偏好
 
-读取 `~/.thinking-tree/preferences.md`（如果存在）。
+读取 `~/.thinking-tree/.preferences.md`（如果存在）。
 
 ### 2. 理解意图
 
@@ -39,7 +39,7 @@ description: Adjust thinking-tree recording preferences via natural language. Up
 ```
 我理解你想：不记录纯 debug 讨论
 
-打算这样调整 preferences.md：
+打算这样调整 .preferences.md：
   + 新增「记录范围」：不记录纯 debug 过程中的排查细节
   
 确认？(y/n)
@@ -63,7 +63,7 @@ description: Adjust thinking-tree recording preferences via natural language. Up
 
 ### 4. 用户确认后写入
 
-确认后修改 `~/.thinking-tree/preferences.md`，保持格式：
+确认后修改 `~/.thinking-tree/.preferences.md`，保持格式：
 
 ```markdown
 # 记录偏好
@@ -93,7 +93,7 @@ description: Adjust thinking-tree recording preferences via natural language. Up
 
 ## 注意事项
 
-- preferences.md 是纯人类可读的 markdown，不是 JSON
+- .preferences.md 是纯人类可读的 markdown，不是 JSON
 - 每条偏好一行，用 `- ` 开头
 - 偏好之间不能矛盾——如果新偏好和旧偏好冲突，替换旧的
 - 用户说"重置"或"清空"时，删除所有条目但保留文件框架

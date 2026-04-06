@@ -38,23 +38,32 @@ function cleanStaleCache() {
 try { cleanStaleCache(); } catch {}
 
 // --- Rules sync ---
-// Copy plugin rules to ~/.claude/rules/ (always, state controlled by .think-state)
+// Sync rules to ~/.claude/rules/ when ON, remove them when OFF (zero token cost)
 function syncRules() {
   const pluginRules = path.join(PLUGIN_ROOT, 'rules');
   if (!fs.existsSync(pluginRules)) return;
+
+  // Check .think-state to decide sync or remove
+  const stateFile = path.join(TREE, '.think-state');
+  let isOn = false;
+  try { isOn = fs.readFileSync(stateFile, 'utf-8').trim() === 'on'; } catch {}
 
   fs.mkdirSync(RULES_DIR, { recursive: true });
 
   for (const file of fs.readdirSync(pluginRules)) {
     if (!file.endsWith('.md')) continue;
-    const src = path.join(pluginRules, file);
     const dest = path.join(RULES_DIR, file);
 
-    const srcContent = fs.readFileSync(src, 'utf-8');
-    let destContent = '';
-    try { destContent = fs.readFileSync(dest, 'utf-8'); } catch {}
-    if (srcContent !== destContent) {
-      fs.writeFileSync(dest, srcContent, 'utf-8');
+    if (isOn) {
+      const src = path.join(pluginRules, file);
+      const srcContent = fs.readFileSync(src, 'utf-8');
+      let destContent = '';
+      try { destContent = fs.readFileSync(dest, 'utf-8'); } catch {}
+      if (srcContent !== destContent) {
+        fs.writeFileSync(dest, srcContent, 'utf-8');
+      }
+    } else {
+      try { fs.unlinkSync(dest); } catch {}
     }
     // Clean up legacy .off files
     try { fs.unlinkSync(dest + '.off'); } catch {}
@@ -65,6 +74,21 @@ try {
   syncRules();
 } catch (e) {
   console.error(`🌳 [thinking-tree] rules sync failed: ${e.message}`);
+}
+
+// --- First-run initialization ---
+try {
+  if (!fs.existsSync(TREE)) {
+    fs.mkdirSync(TREE, { recursive: true });
+    console.log('🌳 [thinking-tree] initialized ~/.thinking-tree/ — use /think to enable recording');
+  }
+  // Ensure .think-state exists (default off for new installs)
+  const stateFile = path.join(TREE, '.think-state');
+  if (!fs.existsSync(stateFile)) {
+    fs.writeFileSync(stateFile, 'off', 'utf-8');
+  }
+} catch (e) {
+  console.error(`🌳 [thinking-tree] init failed: ${e.message}`);
 }
 
 // --- Deploy write-item.js to ~/.thinking-tree/bin/ ---
@@ -80,28 +104,6 @@ try {
     if (srcContent !== destContent) fs.writeFileSync(dest, srcContent, 'utf-8');
   }
 } catch { /* non-fatal */ }
-
-// --- First-run initialization ---
-try {
-  if (!fs.existsSync(TREE)) {
-    fs.mkdirSync(TREE, { recursive: true });
-    fs.writeFileSync(
-      path.join(TREE, '.meta.json'),
-      JSON.stringify({ fragments: { count: 0, lastReduceCount: 0, lastReduceDate: null, nextId: 1 }, sessionLog: { roundCount: 0, lastRouterRound: 0 } }, null, 2) + '\n',
-      'utf-8'
-    );
-    console.log('🌳 [thinking-tree] initialized ~/.thinking-tree/ — use /think to enable recording');
-  }
-  // Ensure .think-state exists (default off for new installs)
-  const stateFile = path.join(TREE, '.think-state');
-  if (!fs.existsSync(stateFile)) {
-    fs.writeFileSync(stateFile, 'off', 'utf-8');
-  }
-} catch (e) {
-  console.error(`🌳 [thinking-tree] init failed: ${e.message}`);
-}
-
-// Session log trimming moved to turn-logger.js (Stop hook)
 
 function readFile(name) {
   try {
@@ -145,7 +147,22 @@ function extractPendingTodos(content) {
   return todos;
 }
 
-// --- Main ---
+// --- Web Viewer: auto-start if not running ---
+const VIEWER_PORT = 3456;
+const VIEWER_SCRIPT = path.join(PLUGIN_ROOT, 'scripts', 'thinking-tree-server.js');
+
+try {
+  const { spawn } = require('child_process');
+  const child = spawn(process.execPath, [VIEWER_SCRIPT, String(VIEWER_PORT)], {
+    detached: true,
+    stdio: 'ignore',
+    env: { ...process.env, USERPROFILE: HOME, HOME: HOME }
+  });
+  child.unref();
+  // Server handles EADDRINUSE gracefully — if already running, new process exits silently
+} catch {}
+
+// --- Inject context ---
 
 const fragmentContent = readFile('fragments.md');
 const fragments = extractRecentFragments(fragmentContent);
@@ -176,24 +193,7 @@ if (todos.length) {
 }
 
 lines.push('上述内容来自 ~/.thinking-tree/，详情可直接读取对应文件。');
-
-// --- Web Viewer: auto-start if not running ---
-const VIEWER_PORT = 3456;
-const VIEWER_SCRIPT = path.join(PLUGIN_ROOT, 'scripts', 'thinking-tree-server.js');
-
-try {
-  const { spawn } = require('child_process');
-  const child = spawn(process.execPath, [VIEWER_SCRIPT, String(VIEWER_PORT)], {
-    detached: true,
-    stdio: 'ignore',
-    env: { ...process.env, USERPROFILE: HOME, HOME: HOME }
-  });
-  child.unref();
-  // Server handles EADDRINUSE gracefully — if already running, new process exits silently
-} catch {}
-
 lines.push('');
 lines.push(`🌳 Web Viewer: http://localhost:${VIEWER_PORT}/`);
-
 
 console.log(lines.join('\n'));

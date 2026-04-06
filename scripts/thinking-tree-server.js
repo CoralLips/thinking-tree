@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// thinking-tree web viewer — standalone read-only server
+// thinking-tree web viewer — standalone server
 // Usage: node thinking-tree-server.js [port]
 // Opens: http://localhost:3456
 
@@ -78,7 +78,8 @@ function listThoughtFiles() {
   try {
     const files = fs.readdirSync(TREE).filter(f =>
       f.endsWith('.md') &&
-      !['fragments.md', 'questions.md', 'todos.md', '.session-log.md'].includes(f)
+      !f.startsWith('.') &&
+      !['fragments.md', 'questions.md', 'todos.md'].includes(f)
     );
     return files.map(f => ({
       title: f.replace('.md', ''),
@@ -315,8 +316,9 @@ const server = http.createServer((req, res) => {
 
   // API: /think status
   if (req.url === '/api/think-status') {
-    const rulesDir = path.join(process.env.USERPROFILE || process.env.HOME, '.claude', 'rules');
-    const active = fs.existsSync(path.join(rulesDir, 'clarifier.md'));
+    const stateFile = path.join(TREE, '.think-state');
+    let active = false;
+    try { active = fs.readFileSync(stateFile, 'utf-8').trim() === 'on'; } catch {}
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ active }));
     return;
