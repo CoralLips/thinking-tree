@@ -10,7 +10,7 @@ description: Toggle thinking-tree recording mode on/off. When enabled, a backgro
 用系统给出的 **Base directory for this skill** 构造绝对路径，运行一次 bash 即可：
 
 ```
-node "$(echo '<base-directory>/../../scripts/think-toggle.js' | tr '\\\\' '/')"
+node "$(echo '<base-directory>/../../scripts/think-toggle.js' | tr '\\' '/')"
 ```
 
 **原样输出脚本的 stdout**，不要额外解释。
