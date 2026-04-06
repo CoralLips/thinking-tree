@@ -11,7 +11,7 @@
     {
       "name": "thinking-tree",
       "version": "0.17.0",
-      "source": ".",
+      "source": "./",
       "description": "Persistent thinking system — capture, organize, and evolve scattered thoughts across Claude Code sessions"
     }
   ]
