@@ -58,10 +58,16 @@ description: Distill fragments into structured thought files — classify into e
 **B. 可提炼为新思路文件的主题**（如果有）：
 
 使用 AskUserQuestion：
-- question: "发现以下主题方向可以提炼为思路文件，选哪个？"
-- header: "选主题"
-- options: 每个主题一个选项，description 列出涉及的碎片数量和核心观点
+- question: "发现 N 个主题方向可以提炼为思路文件，如何处理？"
+- header: "提炼"
 - multiSelect: false
+- options:
+  - label: "全部提炼 (Recommended)", description: "依次生成 N 个思路文件：[列出 主题→文件名（涉及碎片数）]"
+  - label: "逐个选择", description: "展开每个主题，逐一确认是否提炼"
+  - label: "跳过", description: "不提炼，保持现状"
+
+如果用户选"逐个选择"，对每个主题用单选确认：
+- options: "提炼为 XXX.md (Recommended)" / "跳过"
 
 ### 3. 归类执行（如果有）
 
