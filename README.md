@@ -34,9 +34,9 @@ That's it. Work normally — thinking-tree evaluates each conversation turn and 
 ## How it works
 
 1. **You work normally** — code, discuss, debug
-2. **AI evaluates each turn** — is there an independent insight here?
+2. **AI evaluates cumulatively** — not just this turn, but the full conversation so far. Multi-turn insights get caught too
 3. **Worth recording → saved** as a fragment or question in `~/.thinking-tree/`
-4. **Next session** — recent fragments and open questions are injected as context
+4. **Next session** — recent context injected, and AI checks your existing thought files when discussing related topics
 5. **Review anytime** — web viewer at `http://localhost:3456`
 
 Every turn ends with a status line:
@@ -59,7 +59,7 @@ Fragments accumulate → organize into thought files → questions emerge → an
 
 | Command | What it does |
 |---------|-------------|
-| `/think` | Toggle recording on/off (takes effect immediately) |
+| `/think` | Toggle on/off — fully silent when off, zero token cost |
 | `/reduce` | Interactive cleanup — deduplicate, classify, remove stale fragments |
 | `/distill` | Synthesize related fragments into a structured thought file |
 | `/catch` | Manually capture missed insights — accepts a hint about what to look for |
