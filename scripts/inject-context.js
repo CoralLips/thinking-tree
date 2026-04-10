@@ -147,6 +147,13 @@ function extractPendingTodos(content) {
   return todos;
 }
 
+// --- Check /think state — skip viewer + context injection when OFF ---
+const stateFile2 = path.join(TREE, '.think-state');
+let thinkOn = false;
+try { thinkOn = fs.readFileSync(stateFile2, 'utf-8').trim() === 'on'; } catch {}
+
+if (!thinkOn) process.exit(0);
+
 // --- Web Viewer: auto-start if not running ---
 const VIEWER_PORT = 3456;
 const VIEWER_SCRIPT = path.join(PLUGIN_ROOT, 'scripts', 'thinking-tree-server.js');
