@@ -18,6 +18,19 @@ description: Adjust thinking-tree recording preferences via natural language. Up
 
 `$ARGUMENTS` 是自然语言描述的偏好调整。
 
+## 工具准备
+
+本 skill 依赖 `AskUserQuestion` 提供选项式确认。进入交互前：
+
+1. 若工具列表已含 `AskUserQuestion` → 直接使用
+2. 未加载 → 先执行 `ToolSearch("select:AskUserQuestion")` 加载 schema
+3. 加载失败（session 不支持该工具）→ 降级为纯文本确认：
+   - 清晰列出编号选项（例如 `1) 确认 2) 不改 3) 调整`）
+   - 明确告知回复格式（例如「回复编号」）
+   - 不要跳过确认步骤
+
+降级只影响呈现方式，不影响功能。
+
 ## 执行步骤
 
 ### 1. 读取当前偏好
